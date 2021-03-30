@@ -1,15 +1,17 @@
 from subprocess import Popen, PIPE
 import json
+import xlsxwriter
 from typing import Any
 from AutoScalingGroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
 
 class AutoScaling():
 
-    auto_scaling_info = dict()
-    auto_scaling_group = AutoScalingGroup()
-    instances = []
-
     def __init__(self, autoscalinggroup, region):
+
+        self._auto_scaling_info = dict()
+        self._auto_scaling_group = AutoScalingGroup()
+        self._instances = []
+
         self.describe(autoscalinggroup, region)
         self.build_auto_scaling_group()
 
@@ -21,7 +23,7 @@ class AutoScaling():
         output = p.communicate()[0]
         result = output.decode('utf-8').split("--region sa-east-1")
         
-        self.auto_scaling_info = self.json_converter(result[1])
+        self._auto_scaling_info = self.json_converter(result[1])
 
     def build_availability_zones(self, availabilityZones):
         availabilityZoneList = []
@@ -53,7 +55,7 @@ class AutoScaling():
             inst.setLaunchConfigurationName(intance['LaunchConfigurationName'])
             inst.setProtectedFromScaleIn(intance['ProtectedFromScaleIn'])
             intancesList.append(inst)
-            self.instances.append(inst)
+            self._instances.append(inst)
 
         return intancesList
 
@@ -79,29 +81,45 @@ class AutoScaling():
         return tagsList
 
     def build_auto_scaling_group(self):
-        self.auto_scaling_group.setAutoScalingGroupName(self.auto_scaling_info['AutoScalingGroups'][0]['AutoScalingGroupName'])
-        self.auto_scaling_group.setAutoScalingGroupARN(self.auto_scaling_info['AutoScalingGroups'][0]['AutoScalingGroupARN'])
-        self.auto_scaling_group.setLaunchConfigurationName(self.auto_scaling_info['AutoScalingGroups'][0]['LaunchConfigurationName'])
-        self.auto_scaling_group.setMinSize(self.auto_scaling_info['AutoScalingGroups'][0]['MinSize'])
-        self.auto_scaling_group.setMinSize(self.auto_scaling_info['AutoScalingGroups'][0]['MaxSize'])
-        self.auto_scaling_group.setDesiredCapacity(self.auto_scaling_info['AutoScalingGroups'][0]['DesiredCapacity'])
-        self.auto_scaling_group.setDefaultCooldown(self.auto_scaling_info['AutoScalingGroups'][0]['DefaultCooldown'])
-        self.auto_scaling_group.setAvailabilityZones(self.build_availability_zones(self.auto_scaling_info['AutoScalingGroups'][0]['AvailabilityZones']))
-        self.auto_scaling_group.setLoadBalancerNames(self.build_load_balancers(self.auto_scaling_info['AutoScalingGroups'][0]['LoadBalancerNames']))
-        self.auto_scaling_group.setTargetGroupARNs(self.auto_scaling_info['AutoScalingGroups'][0]['TargetGroupARNs'])
-        self.auto_scaling_group.setHealthCheckType(self.auto_scaling_info['AutoScalingGroups'][0]['HealthCheckType'])
-        self.auto_scaling_group.setHealthCheckGracePeriod(self.auto_scaling_info['AutoScalingGroups'][0]['HealthCheckGracePeriod'])
-        self.auto_scaling_group.setInstances(self.auto_scaling_info['AutoScalingGroups'][0]['Instances'])
-        self.auto_scaling_group.setCreatedTime(self.auto_scaling_info['AutoScalingGroups'][0]['CreatedTime'])
-        self.auto_scaling_group.setSuspendedProcesses(self.auto_scaling_info['AutoScalingGroups'][0]['SuspendedProcesses'])
-        self.auto_scaling_group.setVpcZoneIdentifier(self.auto_scaling_info['AutoScalingGroups'][0]['VPCZoneIdentifier'])
-        self.auto_scaling_group.setEnabledMetrics(self.biuld_metrics(self.auto_scaling_info['AutoScalingGroups'][0]['EnabledMetrics']))
-        self.auto_scaling_group.setTags(self.build_tags(self.auto_scaling_info['AutoScalingGroups'][0]['Tags']))
-        self.auto_scaling_group.setTerminationPolicies(self.auto_scaling_info['AutoScalingGroups'][0]['TerminationPolicies'])
-        self.auto_scaling_group.setNewInstancesProtectedFromScaleIn(self.auto_scaling_info['AutoScalingGroups'][0]['NewInstancesProtectedFromScaleIn'])
-        self.auto_scaling_group.setServiceLinkedRoleARN(self.auto_scaling_info['AutoScalingGroups'][0]['ServiceLinkedRoleARN'])
+        self._auto_scaling_group.setAutoScalingGroupName(self._auto_scaling_info['AutoScalingGroups'][0]['AutoScalingGroupName'])
+        self._auto_scaling_group.setAutoScalingGroupARN(self._auto_scaling_info['AutoScalingGroups'][0]['AutoScalingGroupARN'])
+        self._auto_scaling_group.setLaunchConfigurationName(self._auto_scaling_info['AutoScalingGroups'][0]['LaunchConfigurationName'])
+        self._auto_scaling_group.setMinSize(self._auto_scaling_info['AutoScalingGroups'][0]['MinSize'])
+        self._auto_scaling_group.setMinSize(self._auto_scaling_info['AutoScalingGroups'][0]['MaxSize'])
+        self._auto_scaling_group.setDesiredCapacity(self._auto_scaling_info['AutoScalingGroups'][0]['DesiredCapacity'])
+        self._auto_scaling_group.setDefaultCooldown(self._auto_scaling_info['AutoScalingGroups'][0]['DefaultCooldown'])
+        self._auto_scaling_group.setAvailabilityZones(self.build_availability_zones(self._auto_scaling_info['AutoScalingGroups'][0]['AvailabilityZones']))
+        self._auto_scaling_group.setLoadBalancerNames(self.build_load_balancers(self._auto_scaling_info['AutoScalingGroups'][0]['LoadBalancerNames']))
+        self._auto_scaling_group.setTargetGroupARNs(self._auto_scaling_info['AutoScalingGroups'][0]['TargetGroupARNs'])
+        self._auto_scaling_group.setHealthCheckType(self._auto_scaling_info['AutoScalingGroups'][0]['HealthCheckType'])
+        self._auto_scaling_group.setHealthCheckGracePeriod(self._auto_scaling_info['AutoScalingGroups'][0]['HealthCheckGracePeriod'])
+        self._auto_scaling_group.setInstances(self.build_instances(self._auto_scaling_info['AutoScalingGroups'][0]['Instances']))
+        self._auto_scaling_group.setCreatedTime(self._auto_scaling_info['AutoScalingGroups'][0]['CreatedTime'])
+        self._auto_scaling_group.setSuspendedProcesses(self._auto_scaling_info['AutoScalingGroups'][0]['SuspendedProcesses'])
+        self._auto_scaling_group.setVpcZoneIdentifier(self._auto_scaling_info['AutoScalingGroups'][0]['VPCZoneIdentifier'])
+        self._auto_scaling_group.setEnabledMetrics(self.biuld_metrics(self._auto_scaling_info['AutoScalingGroups'][0]['EnabledMetrics']))
+        self._auto_scaling_group.setTags(self.build_tags(self._auto_scaling_info['AutoScalingGroups'][0]['Tags']))
+        self._auto_scaling_group.setTerminationPolicies(self._auto_scaling_info['AutoScalingGroups'][0]['TerminationPolicies'])
+        self._auto_scaling_group.setNewInstancesProtectedFromScaleIn(self._auto_scaling_info['AutoScalingGroups'][0]['NewInstancesProtectedFromScaleIn'])
+        self._auto_scaling_group.setServiceLinkedRoleARN(self._auto_scaling_info['AutoScalingGroups'][0]['ServiceLinkedRoleARN'])
 
-        
+        #print(type(self._auto_scaling_group.getInstances()))
+
+    def create_files(self):
+        for instance in self._instances:
+            workbook = xlsxwriter.Workbook('data-set\\'+instance.getInstanceId()+'.xlsx')
+            worksheet = workbook.add_worksheet()
+  
+            worksheet.write('A1', 'Date')
+            worksheet.write('B1', 'Hour')
+            worksheet.write('C1', 'CPU Utilization')
+            
+            workbook.close()
+
+    def process(self):
+        for instance in self._instances:
+            print(instance.getInstanceId())
 
 if __name__ == '__main__':
     autoscaling = AutoScaling("web-app-asg", "sa-east-1")
+    autoscaling.create_files()
