@@ -1,5 +1,5 @@
 from subprocess import Popen, PIPE
-import json
+import json, os
 import xlsxwriter
 from typing import Any
 from AutoScalingGroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
@@ -103,18 +103,17 @@ class AutoScaling():
         self._auto_scaling_group.setNewInstancesProtectedFromScaleIn(self._auto_scaling_info['AutoScalingGroups'][0]['NewInstancesProtectedFromScaleIn'])
         self._auto_scaling_group.setServiceLinkedRoleARN(self._auto_scaling_info['AutoScalingGroups'][0]['ServiceLinkedRoleARN'])
 
-        #print(type(self._auto_scaling_group.getInstances()))
-
     def create_files(self):
         for instance in self._instances:
-            workbook = xlsxwriter.Workbook('data-set\\'+instance.getInstanceId()+'.xlsx')
-            worksheet = workbook.add_worksheet()
-  
-            worksheet.write('A1', 'Date')
-            worksheet.write('B1', 'Hour')
-            worksheet.write('C1', 'CPU Utilization')
+            if not os.path.isfile('data-set\\'+instance.getInstanceId()+'.xlsx'):
+                workbook = xlsxwriter.Workbook('data-set\\'+instance.getInstanceId()+'.xlsx')
+                worksheet = workbook.add_worksheet()
+    
+                worksheet.write('A1', 'Date')
+                worksheet.write('B1', 'Hour')
+                worksheet.write('C1', 'CPU Utilization')
             
-            workbook.close()
+                workbook.close()
 
     def process(self):
         for instance in self._instances:
