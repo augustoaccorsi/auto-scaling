@@ -149,9 +149,6 @@ class AutoScaling():
 
             self.save_into_file(date_hour[0], date_hour[1][:-1], self._cpu['Datapoints'][0]['Maximum'], instance.getInstanceId())
 
-
-
-
     def process(self):
         for instance in self._instances:
             print(instance.getInstanceId())
