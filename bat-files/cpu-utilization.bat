@@ -1,0 +1,1 @@
+aws cloudwatch get-metric-statistics --metric-name CPUUtilization --start-time %1 --end-time %2 --period 300 --namespace AWS/EC2 --statistics Maximum --dimensions Name=InstanceId,Value=%3

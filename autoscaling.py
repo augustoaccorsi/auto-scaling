@@ -1,7 +1,9 @@
 from subprocess import Popen, PIPE
 import json, os
 import xlsxwriter
-from typing import Any
+import datetime
+import timedelta
+from openpyxl import load_workbook
 from AutoScalingGroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
 
 class AutoScaling():
@@ -11,6 +13,7 @@ class AutoScaling():
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
+        self._cpu = dict()
 
         self.describe(autoscalinggroup, region)
         self.build_auto_scaling_group()
@@ -115,6 +118,40 @@ class AutoScaling():
             
                 workbook.close()
 
+    def save_into_file(self, date, hour, cpu, instance):
+        workbook = load_workbook(filename = 'data-set\\'+instance+'.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=date)
+        worksheet.cell(column=2,row=newRowLocation, value=hour)
+        worksheet.cell(column=3,row=newRowLocation, value=cpu)
+        workbook.save(filename = 'data-set\\'+instance+'.xlsx')
+        workbook.close()
+
+    def read_cpu(self):
+        for instance in self._instances:
+            end_time = datetime.datetime.now()
+            start_time = end_time - datetime.timedelta(minutes=5)
+
+            start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+            end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+            p = Popen(['bat-files\cpu-utilization.bat', start_time, end_time, instance.getInstanceId()], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            output = p.communicate()[0]
+
+            result = output.decode('utf-8').split(instance.getInstanceId())
+
+            self._cpu = self.json_converter(result[1])
+
+            date_hour = end_time.split("T")
+
+            self.save_into_file(date_hour[0], date_hour[1][:-1], self._cpu['Datapoints'][0]['Maximum'], instance.getInstanceId())
+
+
+
+
     def process(self):
         for instance in self._instances:
             print(instance.getInstanceId())
@@ -122,3 +159,4 @@ class AutoScaling():
 if __name__ == '__main__':
     autoscaling = AutoScaling("web-app-asg", "sa-east-1")
     autoscaling.create_files()
+    autoscaling.read_cpu()
