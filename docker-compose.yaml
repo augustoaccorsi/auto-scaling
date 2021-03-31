@@ -1,0 +1,19 @@
+  
+version: "3"
+
+services:
+
+  auto-scaling:
+    image: auto-scaling
+    build: .
+    container_name: auto-scaling
+    environment:
+      - AUTO_SCALING_GROUP=web-app-asg
+      - REGION=sa-east-1
+      - ENV=prod
+    volumes:
+      - "./auto-scaling:/code"
+    expose:
+      - "6000"
+    ports:
+      - "6000:6000"
