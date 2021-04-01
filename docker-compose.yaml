@@ -11,8 +11,6 @@ services:
       - AUTO_SCALING_GROUP=web-app-asg
       - REGION=sa-east-1
       - ENV=prod
-    volumes:
-      - "./auto-scaling:/code"
     expose:
       - "6000"
     ports:
