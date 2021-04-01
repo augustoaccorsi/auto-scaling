@@ -15,16 +15,22 @@ class AutoScaling():
         self._instances = []
         self._cpu = dict()
 
+        self.aws_login()
         self.describe(autoscalinggroup, region)
         self.build_auto_scaling_group()
 
     def json_converter(self, output):
         return json.loads(output)
 
+    def aws_login(self):
+        Popen(['bat-files\\aws-config-id.bat'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        Popen(['bat-files\\aws-config-key.bat'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        Popen(['bat-files\\aws-config-region.bat'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+
     def describe(self, autoscalinggroup, region):
         p = Popen(['bat-files\describe-auto-scaling-group.bat', autoscalinggroup, region], stdin=PIPE, stdout=PIPE, stderr=PIPE)
         output = p.communicate()[0]
-        result = output.decode('utf-8').split("--region sa-east-1")
+        result = output.decode('utf-8').split("--region  sa-east-1")
         
         self._auto_scaling_info = self.json_converter(result[1])
 
@@ -138,7 +144,7 @@ class AutoScaling():
             start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
             end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-            p = Popen(['bat-files\cpu-utilization.bat', start_time, end_time, instance.getInstanceId()], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            p = Popen(['bat-files\cpu-utilization.bat', start_time, end_time, instance.getInstanceId()], stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)  
             output = p.communicate()[0]
 
             result = output.decode('utf-8').split(instance.getInstanceId())
@@ -146,6 +152,8 @@ class AutoScaling():
             self._cpu = self.json_converter(result[1])
 
             date_hour = end_time.split("T")
+
+            print("Instance "+instance.getInstanceId()+": "+str(self._cpu['Datapoints'][0]['Maximum'])+"%")
 
             self.save_into_file(date_hour[0], date_hour[1][:-1], self._cpu['Datapoints'][0]['Maximum'], instance.getInstanceId())
 
