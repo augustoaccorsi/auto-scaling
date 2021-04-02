@@ -15,10 +15,11 @@ RUN pip install datetime
 RUN pip install timedelta
 RUN pip install awscli
 RUN pip install subprocess.run
+RUN pip install boto3
 
 WORKDIR /app/
 COPY . /app/
-COPY bat-files /app/bat-files/
+COPY bat-files /app/bat-files
 
 
 EXPOSE 6000
