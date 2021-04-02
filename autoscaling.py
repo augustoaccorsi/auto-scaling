@@ -9,10 +9,16 @@ import boto3
 
 class AutoScaling():
 
-    def __init__(self, autoscalinggroup, region, accessKeyId, secretAccessKey, sessionToken):
+    #def __init__(self, autoscalinggroup, region, accessKeyId, secretAccessKey, sessionToken):
+    def __init__(self, autoscalinggroup, region):
+        
+        
+        self._asg = boto3.client('autoscaling', region_name=region)
+        self._cloud_watch = boto3.client('cloudwatch',  region_name=region)
 
-        self._asg = boto3.client('autoscaling', region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
-        self._cloud_watch = boto3.client('cloudwatch',  region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
+        #self._asg = boto3.client('autoscaling', region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
+        #self._cloud_watch = boto3.client('cloudwatch',  region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
+       
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
@@ -250,7 +256,6 @@ class AutoScaling():
                 print("Network Packages Out: "+packetOut+" bytes")
             except:
                 packetOut = None
-            print()
 
             self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getInstanceId())
 
@@ -258,7 +263,16 @@ class AutoScaling():
         for instance in self._instances:
             print(instance.getInstanceId())
 
+    def scale_up(self):
+        response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
+        print(response)
+    
+    def scale_down(self):
+        response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - 1))
+        print(response)
+
 if __name__ == '__main__':
     autoscaling = AutoScaling("web-app-asg", "sa-east-1")
     autoscaling.create_files()
     autoscaling.read_instances()
+    autoscaling.scale_down()
