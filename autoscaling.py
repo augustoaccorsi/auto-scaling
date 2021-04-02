@@ -5,35 +5,28 @@ import datetime
 import timedelta
 from openpyxl import load_workbook
 from AutoScalingGroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
+import boto3
 
 class AutoScaling():
 
     def __init__(self, autoscalinggroup, region):
 
+        self._asg = boto3.client('autoscaling', region_name=region)
+        self._cloud_watch = boto3.client('cloudwatch',  region_name=region)
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
         self._cpu = dict()
 
-        self.aws_login()
-        self.describe(autoscalinggroup, region)
+        self.describe(autoscalinggroup) 
         self.build_auto_scaling_group()
 
     def json_converter(self, output):
         return json.loads(output)
 
-    def aws_login(self):
-        Popen(['bat-files\\aws-config-id.bat'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        Popen(['bat-files\\aws-config-key.bat'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        Popen(['bat-files\\aws-config-region.bat'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-
-    def describe(self, autoscalinggroup, region):
-        p = Popen(['bat-files\describe-auto-scaling-group.bat', autoscalinggroup, region], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        output = p.communicate()[0]
-        result = output.decode('utf-8').split("--region  sa-east-1")
+    def describe(self, autoscalinggroup):
+        self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[autoscalinggroup], MaxRecords=100)  
         
-        self._auto_scaling_info = self.json_converter(result[1])
-
     def build_availability_zones(self, availabilityZones):
         availabilityZoneList = []
         for zone in availabilityZones:
@@ -144,18 +137,25 @@ class AutoScaling():
             start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
             end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-            p = Popen(['bat-files\cpu-utilization.bat', start_time, end_time, instance.getInstanceId()], stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)  
-            output = p.communicate()[0]
-
-            result = output.decode('utf-8').split(instance.getInstanceId())
-
-            self._cpu = self.json_converter(result[1])
+            self._cpu = self._cloud_watch.get_metric_statistics(
+            Namespace='AWS/EC2',
+            MetricName='CPUUtilization',
+            Dimensions=[
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance.getInstanceId()
+                },
+            ],
+            StartTime=start_time,
+            EndTime=end_time,
+            Period=300,
+            Statistics=['Average'])
 
             date_hour = end_time.split("T")
 
-            print("Instance "+instance.getInstanceId()+": "+str(self._cpu['Datapoints'][0]['Maximum'])+"%")
+            print("Instance "+instance.getInstanceId()+": "+str(self._cpu['Datapoints'][0]['Average'])+"%")
 
-            self.save_into_file(date_hour[0], date_hour[1][:-1], self._cpu['Datapoints'][0]['Maximum'], instance.getInstanceId())
+            self.save_into_file(date_hour[0], date_hour[1][:-1], self._cpu['Datapoints'][0]['Average'], instance.getInstanceId())
 
     def process(self):
         for instance in self._instances:
