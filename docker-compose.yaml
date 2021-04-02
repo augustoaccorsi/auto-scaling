@@ -1,12 +1,11 @@
-  
 version: "3"
 
 services:
 
-  auto-scaling:
-    image: auto-scaling
+  autoscaling:
+    image: autoscaling
     build: .
-    container_name: auto-scaling
+    container_name: autoscaling
     environment:
       - AUTO_SCALING_GROUP=web-app-asg
       - REGION=sa-east-1

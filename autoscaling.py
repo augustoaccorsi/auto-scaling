@@ -9,14 +9,13 @@ import boto3
 
 class AutoScaling():
 
-    def __init__(self, autoscalinggroup, region):
+    def __init__(self, autoscalinggroup, region, accessKeyId, secretAccessKey, sessionToken):
 
-        self._asg = boto3.client('autoscaling', region_name=region)
-        self._cloud_watch = boto3.client('cloudwatch',  region_name=region)
+        self._asg = boto3.client('autoscaling', region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
+        self._cloud_watch = boto3.client('cloudwatch',  region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
-        self._cpu = dict()
 
         self.describe(autoscalinggroup) 
         self.build_auto_scaling_group()
@@ -114,10 +113,14 @@ class AutoScaling():
                 worksheet.write('A1', 'Date')
                 worksheet.write('B1', 'Hour')
                 worksheet.write('C1', 'CPU Utilization')
+                worksheet.write('D1', 'Network In')
+                worksheet.write('E1', 'Network Out')
+                worksheet.write('F1', 'Network Packets In')
+                worksheet.write('G1', 'Network Packets Out')
             
                 workbook.close()
 
-    def save_into_file(self, date, hour, cpu, instance):
+    def save_into_file(self, date, hour, cpu, networkIn, networkOut, networkPacketsIn, networkPacketsOut,  instance):
         workbook = load_workbook(filename = 'data-set\\'+instance+'.xlsx')
         worksheet = workbook['Sheet1']
         
@@ -125,11 +128,20 @@ class AutoScaling():
 
         worksheet.cell(column=1,row=newRowLocation, value=date)
         worksheet.cell(column=2,row=newRowLocation, value=hour)
-        worksheet.cell(column=3,row=newRowLocation, value=cpu)
+        if cpu != None:
+            worksheet.cell(column=3,row=newRowLocation, value=cpu)
+        if networkIn != None:
+            worksheet.cell(column=4,row=newRowLocation, value=networkIn)
+        if networkOut != None:
+            worksheet.cell(column=5,row=newRowLocation, value=networkOut)
+        if networkPacketsIn != None:
+            worksheet.cell(column=6,row=newRowLocation, value=networkPacketsIn)
+        if networkPacketsOut != None:
+            worksheet.cell(column=7,row=newRowLocation, value=networkPacketsOut)
         workbook.save(filename = 'data-set\\'+instance+'.xlsx')
         workbook.close()
 
-    def read_cpu(self):
+    def read_instances(self):
         for instance in self._instances:
             end_time = datetime.datetime.now()
             start_time = end_time - datetime.timedelta(minutes=5)
@@ -137,8 +149,7 @@ class AutoScaling():
             start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
             end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-            self._cpu = self._cloud_watch.get_metric_statistics(
-            Namespace='AWS/EC2',
+            cpu = self._cloud_watch.get_metric_statistics(Namespace='AWS/EC2',
             MetricName='CPUUtilization',
             Dimensions=[
                 {
@@ -151,11 +162,97 @@ class AutoScaling():
             Period=300,
             Statistics=['Average'])
 
+            networkIn = self._cloud_watch.get_metric_statistics(
+            Namespace='AWS/EC2',
+            MetricName='NetworkIn',
+            Dimensions=[
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance.getInstanceId()
+                },
+            ],
+            StartTime=start_time,
+            EndTime=end_time,
+            Period=300,
+            Statistics=['Average'])
+
+            networkOut = self._cloud_watch.get_metric_statistics(
+            Namespace='AWS/EC2',
+            MetricName='NetworkOut',
+            Dimensions=[
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance.getInstanceId()
+                },
+            ],
+            StartTime=start_time,
+            EndTime=end_time,
+            Period=300,
+            Statistics=['Average'])
+
+            networkPacketsIn = self._cloud_watch.get_metric_statistics(
+            Namespace='AWS/EC2',
+            MetricName='NetworkPacketsIn',
+            Dimensions=[
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance.getInstanceId()
+                },
+            ],
+            StartTime=start_time,
+            EndTime=end_time,
+            Period=300,
+            Statistics=['Average'])
+
+            networkPacketsOut = self._cloud_watch.get_metric_statistics(
+            Namespace='AWS/EC2',
+            MetricName='NetworkPacketsOut',
+            Dimensions=[
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance.getInstanceId()
+                },
+            ],
+            StartTime=start_time,
+            EndTime=end_time,
+            Period=300,
+            Statistics=['Average'])
+
             date_hour = end_time.split("T")
+            
+            print("Instance "+instance.getInstanceId())
+            try:
+                cpuUtilization = str(cpu['Datapoints'][0]['Average'])
+                print("CPU Usage: "+cpuUtilization+"%")
+            except:
+                cpuUtilization = None
+            
+            try:
+                netIn = str(networkIn['Datapoints'][0]['Average'])
+                print("Network In: "+netIn+" bytes")
+            except:
+                netIn = None
+            
+            try:
+                netOut = str(networkOut['Datapoints'][0]['Average'])
+                print("Network Out: "+netOut+" bytes")
+            except:
+                netOut = None
+            
+            try:
+                packetIn = str(networkPacketsIn['Datapoints'][0]['Average'])
+                print("Network Packages In: "+packetIn+" bytes")
+            except:
+                packetIn = None
+            
+            try:
+                packetOut = str(networkPacketsOut['Datapoints'][0]['Average'])
+                print("Network Packages Out: "+packetOut+" bytes")
+            except:
+                packetOut = None
+            print()
 
-            print("Instance "+instance.getInstanceId()+": "+str(self._cpu['Datapoints'][0]['Average'])+"%")
-
-            self.save_into_file(date_hour[0], date_hour[1][:-1], self._cpu['Datapoints'][0]['Average'], instance.getInstanceId())
+            self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getInstanceId())
 
     def process(self):
         for instance in self._instances:
@@ -164,4 +261,4 @@ class AutoScaling():
 if __name__ == '__main__':
     autoscaling = AutoScaling("web-app-asg", "sa-east-1")
     autoscaling.create_files()
-    autoscaling.read_cpu()
+    autoscaling.read_instances()
