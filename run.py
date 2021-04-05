@@ -1,6 +1,6 @@
 import os, subprocess
 from apscheduler.schedulers.blocking import BlockingScheduler
-from autoscaling import AutoScaling
+from app import App
 
 auto_scaling_group = "os.environ['AUTO_SCALING_GROUP']"
 region = "os.environ['REGION']"
@@ -11,21 +11,21 @@ env = "dev" #os.environ['ENV']
 
 class Run:
     def __init__(self):        
-        #self._autoscaling = AutoScaling(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
-        self._autoscaling = AutoScaling("engine-asg", "sa-east-1") 
+        #self._app = App(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
+        self._app = App("engine-asg", "sa-east-1") 
 
     def auto_scaling_check(self):
         print("Executing Analysis on Auto Scaling Group "+auto_scaling_group)
-        self._autoscaling.create_files()
-        self._autoscaling.read_instances()
+        self._app.create_files()
+        self._app.read_instances()
         print("Analysis Completed")
         print("----------------------------------")
 
     def auto_scaling_check_local(self):
         print("Executing Analysis on Auto Scaling Group "+"engine-asg")
-        autoscaling = AutoScaling("engine-asg", "sa-east-1")
-        autoscaling.create_files()
-        autoscaling.read_instances()
+        app = App("engine-asg", "sa-east-1")
+        app.create_files()
+        app.read_instances()
         print("Analysis Completed")
         print("----------------------------------")
 

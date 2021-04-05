@@ -159,6 +159,11 @@ class Instance:
         self._healthStatus = ""
         self._launchConfigurationName = ""
         self._protectedFromScaleIn = ""
+        self._cpuUtilization = ""
+        self._networkIn = ""
+        self._networkOut = ""
+        self._networkPacketsIn = ""
+        self._networkPacketsOut = ""
 
     def setInstanceId(self,instanceId):
         self._instanceId = instanceId
@@ -201,6 +206,36 @@ class Instance:
 
     def getProtectedFromScaleIn(self):
        return self._protectedFromScaleIn
+
+    def setCpuUtilization(self, cpuUtilization):
+        self._cpuUtilization = cpuUtilization
+    
+    def setNetworkIn(self, networkIn):
+        self._networkIn = networkIn
+    
+    def setNetworkOut(self, networkOut):
+        self._networkOut = networkOut
+    
+    def setNetworkPacketsIn(self, networkPacketsIn):
+        self._networkPacketsIn = networkPacketsIn
+    
+    def setNetworkPacketsOut(self, networkPacketsOut):
+        self._networkPacketsOut = networkPacketsOut
+
+    def getCpuUtilization(self):
+        return self._cpuUtilization
+    
+    def getNetworkIn(self):
+        return self._networkIn
+    
+    def getNetworkOut(self):
+        return self._networkOut
+    
+    def getNetworkPacketsIn(self):
+        return self._networkPacketsIn
+    
+    def getNetworkPacketsOut(self):
+        return self._networkPacketsOut
 
 class AvailabilityZone():
     def __init__(self):
