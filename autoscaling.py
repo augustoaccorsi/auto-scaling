@@ -186,7 +186,7 @@ class AutoScaling():
             except:
                 lifecycleState = None
             try:
-                cpuUtilization = str(cpu['Datapoints'][0]['Average'])
+                cpuUtilization = str(round(float(cpu['Datapoints'][0]['Average']),4))
                 print("CPU Usage: "+cpuUtilization+"%")
             except:
                 cpuUtilization = None
