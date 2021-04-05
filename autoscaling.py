@@ -160,15 +160,17 @@ class AutoScaling():
                     'Name': 'InstanceId',
                     'Value': instance
                 },
-            ], StartTime=start_time, EndTime=end_time, Period=300, Statistics=['Average']) 
+            ], StartTime=start_time, EndTime=end_time, Period=60, Statistics=['Maximum']) 
 
     def read_instances(self):
         for instance in self._instances:
-            end_time = datetime.datetime.now()
-            start_time = end_time - datetime.timedelta(minutes=5)
+            end_time = datetime.datetime.utcnow()
+            
+            start_time = end_time - datetime.timedelta(seconds=120)
 
             start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
             end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+         
             instanceId = instance.getInstanceId()
 
             cpu =  self.get_metric("CPUUtilization", instanceId, start_time, end_time)
@@ -186,31 +188,31 @@ class AutoScaling():
             except:
                 lifecycleState = None
             try:
-                cpuUtilization = str(round(float(cpu['Datapoints'][0]['Average']),4))
+                cpuUtilization = str(round(float(cpu['Datapoints'][0]['Maximum']),4))
                 print("CPU Usage: "+cpuUtilization+"%")
             except:
                 cpuUtilization = None
             
             try:
-                netIn = str(networkIn['Datapoints'][0]['Average'])
+                netIn = str(networkIn['Datapoints'][0]['Maximum'])
                 print("Network In: "+netIn+" bytes")
             except:
                 netIn = None
             
             try:
-                netOut = str(networkOut['Datapoints'][0]['Average'])
+                netOut = str(networkOut['Datapoints'][0]['Maximum'])
                 print("Network Out: "+netOut+" bytes")
             except:
                 netOut = None
             
             try:
-                packetIn = str(networkPacketsIn['Datapoints'][0]['Average'])
+                packetIn = str(networkPacketsIn['Datapoints'][0]['Maximum'])
                 print("Network Packages In: "+packetIn)
             except:
                 packetIn = None
             
             try:
-                packetOut = str(networkPacketsOut['Datapoints'][0]['Average'])
+                packetOut = str(networkPacketsOut['Datapoints'][0]['Maximum'])
                 print("Network Packages Out: "+packetOut)
             except:
                 packetOut = None
