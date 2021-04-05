@@ -30,7 +30,7 @@ class AutoScaling():
         return json.loads(output)
 
     def describe(self, autoscalinggroup):
-        self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[autoscalinggroup], MaxRecords=100)  
+        self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[autoscalinggroup], MaxRecords=100)
         
     def build_availability_zones(self, availabilityZones):
         availabilityZoneList = []
@@ -123,10 +123,11 @@ class AutoScaling():
                 worksheet.write('E1', 'Network Out')
                 worksheet.write('F1', 'Network Packets In')
                 worksheet.write('G1', 'Network Packets Out')
+                worksheet.write('H1', 'Lifecycle State')
             
                 workbook.close()
 
-    def save_into_file(self, date, hour, cpu, networkIn, networkOut, networkPacketsIn, networkPacketsOut,  instance):
+    def save_into_file(self, date, hour, cpu, networkIn, networkOut, networkPacketsIn, networkPacketsOut, lifecycleState, instance):
         workbook = load_workbook(filename = 'data-set\\'+instance+'.xlsx')
         worksheet = workbook['Sheet1']
         
@@ -144,8 +145,22 @@ class AutoScaling():
             worksheet.cell(column=6,row=newRowLocation, value=networkPacketsIn)
         if networkPacketsOut != None:
             worksheet.cell(column=7,row=newRowLocation, value=networkPacketsOut)
+        if lifecycleState != None:
+            worksheet.cell(column=8,row=newRowLocation, value=lifecycleState)
+
         workbook.save(filename = 'data-set\\'+instance+'.xlsx')
         workbook.close()
+
+
+    def get_metric(self, metric, instance, start_time, end_time):
+        return self._cloud_watch.get_metric_statistics(Namespace='AWS/EC2',
+            MetricName=metric,
+            Dimensions=[
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance
+                },
+            ], StartTime=start_time, EndTime=end_time, Period=300, Statistics=['Average']) 
 
     def read_instances(self):
         for instance in self._instances:
@@ -154,79 +169,22 @@ class AutoScaling():
 
             start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
             end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+            instanceId = instance.getInstanceId()
 
-            cpu = self._cloud_watch.get_metric_statistics(Namespace='AWS/EC2',
-            MetricName='CPUUtilization',
-            Dimensions=[
-                {
-                    'Name': 'InstanceId',
-                    'Value': instance.getInstanceId()
-                },
-            ],
-            StartTime=start_time,
-            EndTime=end_time,
-            Period=300,
-            Statistics=['Average'])
-
-            networkIn = self._cloud_watch.get_metric_statistics(
-            Namespace='AWS/EC2',
-            MetricName='NetworkIn',
-            Dimensions=[
-                {
-                    'Name': 'InstanceId',
-                    'Value': instance.getInstanceId()
-                },
-            ],
-            StartTime=start_time,
-            EndTime=end_time,
-            Period=300,
-            Statistics=['Average'])
-
-            networkOut = self._cloud_watch.get_metric_statistics(
-            Namespace='AWS/EC2',
-            MetricName='NetworkOut',
-            Dimensions=[
-                {
-                    'Name': 'InstanceId',
-                    'Value': instance.getInstanceId()
-                },
-            ],
-            StartTime=start_time,
-            EndTime=end_time,
-            Period=300,
-            Statistics=['Average'])
-
-            networkPacketsIn = self._cloud_watch.get_metric_statistics(
-            Namespace='AWS/EC2',
-            MetricName='NetworkPacketsIn',
-            Dimensions=[
-                {
-                    'Name': 'InstanceId',
-                    'Value': instance.getInstanceId()
-                },
-            ],
-            StartTime=start_time,
-            EndTime=end_time,
-            Period=300,
-            Statistics=['Average'])
-
-            networkPacketsOut = self._cloud_watch.get_metric_statistics(
-            Namespace='AWS/EC2',
-            MetricName='NetworkPacketsOut',
-            Dimensions=[
-                {
-                    'Name': 'InstanceId',
-                    'Value': instance.getInstanceId()
-                },
-            ],
-            StartTime=start_time,
-            EndTime=end_time,
-            Period=300,
-            Statistics=['Average'])
-
+            cpu =  self.get_metric("CPUUtilization", instanceId, start_time, end_time)
+            networkIn =  self.get_metric("NetworkIn", instanceId, start_time, end_time)
+            networkOut =  self.get_metric("NetworkOut", instanceId, start_time, end_time)
+            networkPacketsIn =  self.get_metric("NetworkPacketsIn", instanceId, start_time, end_time)
+            networkPacketsOut =  self.get_metric("NetworkPacketsOut", instanceId, start_time, end_time)
+    
             date_hour = end_time.split("T")
             
             print("Instance "+instance.getInstanceId())
+            try:
+                lifecycleState = instance.getLifecycleState()
+                print("Lifecycle State: "+lifecycleState)
+            except:
+                lifecycleState = None
             try:
                 cpuUtilization = str(cpu['Datapoints'][0]['Average'])
                 print("CPU Usage: "+cpuUtilization+"%")
@@ -247,21 +205,20 @@ class AutoScaling():
             
             try:
                 packetIn = str(networkPacketsIn['Datapoints'][0]['Average'])
-                print("Network Packages In: "+packetIn+" bytes")
+                print("Network Packages In: "+packetIn)
             except:
                 packetIn = None
             
             try:
                 packetOut = str(networkPacketsOut['Datapoints'][0]['Average'])
-                print("Network Packages Out: "+packetOut+" bytes")
+                print("Network Packages Out: "+packetOut)
             except:
                 packetOut = None
 
-            self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getInstanceId())
+            self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, lifecycleState, instance.getInstanceId())
 
-    def process(self):
-        for instance in self._instances:
-            print(instance.getInstanceId())
+            #if cpuUtilization != None:
+            #   self.reactive_scale(instanceId, cpuUtilization)
 
     def scale_up(self):
         response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
@@ -271,8 +228,15 @@ class AutoScaling():
         response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - 1))
         print(response)
 
+    def reactive_scale(self, instanceId, cpuUtilization):
+        if float(cpuUtilization) >= 80:
+            self.scale_up()
+        if float(cpuUtilization) <=20 and len(self._instances) >=2:
+            self.scale_down()
+
 if __name__ == '__main__':
-    autoscaling = AutoScaling("web-app-asg", "sa-east-1")
+    autoscaling = AutoScaling("engine-asg", "sa-east-1")
     autoscaling.create_files()
     autoscaling.read_instances()
-    autoscaling.scale_down()
+    #autoscaling.scale_up()
+    #autoscaling.scale_down()

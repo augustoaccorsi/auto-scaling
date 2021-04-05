@@ -1,0 +1,125 @@
+{
+    "AutoScalingGroups": [
+        {
+            "AutoScalingGroupName": "web-app-asg",
+            "AutoScalingGroupARN": "arn:aws:autoscaling:sa-east-1:571785655335:autoScalingGroup:65c51990-d9df-431a-ae1e-dd212ab44849:autoScalingGroupName/web-app-asg",
+            "LaunchConfigurationName": "web-app-launch-config",
+            "MinSize": 1,
+            "MaxSize": 5,
+            "DesiredCapacity": 2,
+            "DefaultCooldown": 300,
+            "AvailabilityZones": [
+                "sa-east-1a"
+            ],
+            "LoadBalancerNames": [
+                "augusto-accorsi-microservice-elb"
+            ],
+            "TargetGroupARNs": [],
+            "HealthCheckType": "EC2",
+            "HealthCheckGracePeriod": 300,
+            "Instances": [
+                {
+                    "InstanceId": "i-08ae24911977d2634",
+                    "InstanceType": "t2.micro",
+                    "AvailabilityZone": "sa-east-1a",
+                    "LifecycleState": "InService",
+                    "HealthStatus": "Healthy",
+                    "LaunchConfigurationName": "web-app-launch-config",
+                    "ProtectedFromScaleIn": "False"
+                },
+                {
+                    "InstanceId": "i-0d0742ad676ee9a46",
+                    "InstanceType": "t2.micro",
+                    "AvailabilityZone": "sa-east-1a",
+                    "LifecycleState": "InService",
+                    "HealthStatus": "Healthy",
+                    "LaunchConfigurationName": "web-app-launch-config",
+                    "ProtectedFromScaleIn": "False"
+                }
+            ],
+            "CreatedTime": "datetime.datetime(2021,3,28,19,8,50,778000, tzinfo=tzutc())",
+            "SuspendedProcesses": [],
+            "VPCZoneIdentifier": "subnet-01db21367280d9caf",
+            "EnabledMetrics": [
+                {
+                    "Metric": "GroupInServiceCapacity",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupInServiceInstances",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupTerminatingInstances",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupDesiredCapacity",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupMinSize",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupMaxSize",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupStandbyCapacity",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupPendingCapacity",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupStandbyInstances",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupTotalCapacity",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupTotalInstances",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupPendingInstances",
+                    "Granularity": "1Minute"
+                },
+                {
+                    "Metric": "GroupTerminatingCapacity",
+                    "Granularity": "1Minute"
+                }
+            ],
+            "Tags": [
+                {
+                    "ResourceId": "web-app-asg",
+                    "ResourceType": "auto-scaling-group",
+                    "Key": "Name",
+                    "Value": "web-app-microservice-asg",
+                    "PropagateAtLaunch": "True"
+                }
+            ],
+            "TerminationPolicies": [
+                "Default"
+            ],
+            "NewInstancesProtectedFromScaleIn": "False",
+            "ServiceLinkedRoleARN": "arn:aws:iam::571785655335:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+        }
+    ],
+    "ResponseMetadata": {
+        "RequestId": "16a1fced-beb7-44ff-9a22-cf550afdb1e3",
+        "HTTPStatusCode": 200,
+        "HTTPHeaders": {
+            "x-amzn-requestid": "16a1fced-beb7-44ff-9a22-cf550afdb1e3",
+            "content-type": "text/xml",
+            "content-length": "4799",
+            "vary": "accept-encoding",
+            "date": "Fri, 02 Apr 2021 22:35:00 GMT"
+        },
+        "RetryAttempts": 0
+    }
+}

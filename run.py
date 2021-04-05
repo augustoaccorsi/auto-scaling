@@ -12,17 +12,19 @@ env = "dev" #os.environ['ENV']
 class Run:
     def __init__(self):        
         #self._autoscaling = AutoScaling(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
-        self._autoscaling = AutoScaling("web-app-asg", "sa-east-1") 
+        self._autoscaling = AutoScaling("engine-asg", "sa-east-1") 
 
     def auto_scaling_check(self):
+        print()
         print("Executing Analysis on Auto Scaling Group "+auto_scaling_group)
         self._autoscaling.create_files()
         self._autoscaling.read_instances()
         print("Analysis Completed\n\n")
 
     def auto_scaling_check_local(self):
-        print("Executing Analysis on Auto Scaling Group "+"web-app-asg")
-        autoscaling = AutoScaling("web-app-asg", "sa-east-1")
+        print()
+        print("Executing Analysis on Auto Scaling Group "+"engine-asg")
+        autoscaling = AutoScaling("engine-asg", "sa-east-1")
         autoscaling.create_files()
         autoscaling.read_instances()
         print("Analysis Completed\n\n")
