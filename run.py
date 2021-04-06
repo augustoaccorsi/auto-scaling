@@ -31,7 +31,7 @@ class Run:
         while True:
             count +=1
             print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg")
-            print("-----")
+            print()
             self._localApp.create_files()
             self._localApp.read_instances()
             print("Analysis Completed")
@@ -40,6 +40,7 @@ class Run:
 
 if __name__ == '__main__':
     run = Run()
+    print("Starting Event Loop")
     if env == 'dev':
         loop = asyncio.get_event_loop()
         try:
@@ -49,7 +50,7 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             pass
         finally:
-            print("Closing Loop")
+            print("Closing Event Loop")
             loop.close()
     else:
         loop = asyncio.get_event_loop()

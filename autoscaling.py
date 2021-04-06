@@ -34,6 +34,7 @@ class Autoscaling:
         print("TODO")       
 
     def process(self):
+        result = False
         for instance in self._instances:
             if instance.getLifecycleState() == "InService":
               result = self.reactive_scale(instance)

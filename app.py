@@ -11,6 +11,8 @@ class App():
         
         self._asg = boto3.client('autoscaling', region_name=region)
         self._cloud_watch = boto3.client('cloudwatch',  region_name=region)
+        self._ec2 = boto3.client('ec2',  region_name=region)
+
 
         #self._asg = boto3.client('autoscaling', region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
         #self._cloud_watch = boto3.client('cloudwatch',  region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
@@ -60,7 +62,8 @@ class App():
             inst.setInstanceId(intance['InstanceId'])
             inst.setInstanceType(intance['InstanceType'])
             inst.setAvailabilityZone(intance['AvailabilityZone'])
-            inst.setLifecycleState(intance['LifecycleState'])
+            status = self._ec2.describe_instances(InstanceIds=[intance['InstanceId']])        
+            inst.setLifecycleState(status['Reservations'][0]['Instances'][0]['State']['Name'].title())
             inst.setHealthStatus(intance['HealthStatus'])
             inst.setLaunchConfigurationName(intance['LaunchConfigurationName'])
             inst.setProtectedFromScaleIn(intance['ProtectedFromScaleIn'])
@@ -187,44 +190,43 @@ class App():
             print("Instance "+str(count)+":  "+instance.getInstanceId())
             print("Lifecycle State: "+instance.getLifecycleState())
     
-            if(instance.getLifecycleState() == "InService"):
-                try:
-                    cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
-                    print("CPU Usage: "+str(cpuUtilization)+"%")
-                    instance.setCpuUtilization(cpuUtilization)
-                except:
-                    cpuUtilization = None
-                
-                try:
-                    netIn = str(networkIn['Datapoints'][0]['Maximum'])
-                    print("Network In: "+netIn+" bytes")
-                    instance.setNetworkIn(netIn)
-                except:
-                    netIn = None
-                
-                try:
-                    netOut = str(networkOut['Datapoints'][0]['Maximum'])
-                    print("Network Out: "+netOut+" bytes")
-                    instance.setNetworkOut(netOut)
-                except:
-                    netOut = None
-                
-                try:
-                    packetIn = str(networkPacketsIn['Datapoints'][0]['Average'])
-                    print("Network Packages In: "+packetIn)
-                    instance.setNetworkPacketsIn(packetIn)
-                except:
-                    packetIn = None
-                
-                try:
-                    packetOut = str(networkPacketsOut['Datapoints'][0]['Average'])
-                    print("Network Packages Out: "+packetOut)
-                    instance.setNetworkPacketsOut(packetOut)
-                except:
-                    packetOut = None
+            try:
+                cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
+                print("CPU Usage: "+str(cpuUtilization)+"%")
+                instance.setCpuUtilization(cpuUtilization)
+            except:
+                cpuUtilization = None
+            
+            try:
+                netIn = str(networkIn['Datapoints'][0]['Maximum'])
+                print("Network In: "+netIn+" bytes")
+                instance.setNetworkIn(netIn)
+            except:
+                netIn = None
+            
+            try:
+                netOut = str(networkOut['Datapoints'][0]['Maximum'])
+                print("Network Out: "+netOut+" bytes")
+                instance.setNetworkOut(netOut)
+            except:
+                netOut = None
+            
+            try:
+                packetIn = str(networkPacketsIn['Datapoints'][0]['Average'])
+                print("Network Packages In: "+packetIn)
+                instance.setNetworkPacketsIn(packetIn)
+            except:
+                packetIn = None
+            
+            try:
+                packetOut = str(networkPacketsOut['Datapoints'][0]['Average'])
+                print("Network Packages Out: "+packetOut)
+                instance.setNetworkPacketsOut(packetOut)
+            except:
+                packetOut = None
 
-                self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
-                print()
+            self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
+            print()
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
 
         if autoscaling.process() == True:
@@ -242,5 +244,5 @@ if __name__ == '__main__':
     app = App("engine-asg", "sa-east-1")
     app.create_files()
     app.read_instances()
-    #app.scale_up()
-    app.scale_down()
+    app.scale_up()
+    #app.scale_down()
