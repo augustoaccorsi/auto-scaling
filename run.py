@@ -19,7 +19,7 @@ class Run:
         while True:
             count +=1
             print("Executing Analysis "+str(count)+" on Auto Scaling Group "+auto_scaling_group)
-            print("-----")
+            print()
             self._app.create_files()
             self._app.read_instances()
             print("Analysis Completed")
