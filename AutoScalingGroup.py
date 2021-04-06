@@ -159,11 +159,13 @@ class Instance:
         self._healthStatus = ""
         self._launchConfigurationName = ""
         self._protectedFromScaleIn = ""
-        self._cpuUtilization = ""
+        self._cpuUtilization = 0.0
         self._networkIn = ""
         self._networkOut = ""
         self._networkPacketsIn = ""
         self._networkPacketsOut = ""
+        self._triggerUp = 0
+        self._triggerDown = 0
 
     def setInstanceId(self,instanceId):
         self._instanceId = instanceId
@@ -236,6 +238,24 @@ class Instance:
     
     def getNetworkPacketsOut(self):
         return self._networkPacketsOut
+    
+    def incrementTriggerUp(self):
+        self._triggerUp +=1
+
+    def getTriggerUp(self):
+        return self._triggerUp
+    
+    def clearTriggerUp(self):
+        self._triggerUp = 0
+    
+    def incrementTriggerDown(self):
+        self._triggerDown +=1
+
+    def getTriggerDown(self):
+        return self._triggerDown
+    
+    def clearTriggerDown(self):
+        self._triggerDown = 0
 
 class AvailabilityZone():
     def __init__(self):
