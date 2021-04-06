@@ -1,6 +1,7 @@
 import json, os, xlsxwriter, datetime, timedelta, boto3
 from openpyxl import load_workbook
-from AutoScalingGroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
+from autoScalingGroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
+from autoscaling import Autoscaling
 
 class App():
 
@@ -13,19 +14,26 @@ class App():
 
         #self._asg = boto3.client('autoscaling', region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
         #self._cloud_watch = boto3.client('cloudwatch',  region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
-       
+
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
 
-        self.describe(autoscalinggroup) 
-        self.build_auto_scaling_group()
+        self.describe(autoscalinggroup).build_auto_scaling_group()
 
     def json_converter(self, output):
         return json.loads(output)
+    
+    def clear_all(self):
+        self._auto_scaling_info = dict()
+        self._auto_scaling_group = AutoScalingGroup()
+        self._instances = []
 
     def describe(self, autoscalinggroup):
+        if len(self._instances) > 0:
+            self.clear_all()
         self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[autoscalinggroup], MaxRecords=100)
+        return self
         
     def build_availability_zones(self, availabilityZones):
         availabilityZoneList = []
@@ -179,8 +187,8 @@ class App():
     
             if(instance.getLifecycleState() == "InService"):
                 try:
-                    cpuUtilization = str(round(float(cpu['Datapoints'][0]['Maximum']),4))
-                    print("CPU Usage: "+cpuUtilization+"%")
+                    cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
+                    print("CPU Usage: "+str(cpuUtilization)+"%")
                     instance.setCpuUtilization(cpuUtilization)
                 except:
                     cpuUtilization = None
@@ -215,7 +223,31 @@ class App():
 
                 self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
 
+        autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
+
+        if autoscaling.process() == True:
+            self.describe(self._auto_scaling_group.getAutoScalingGroupName()).build_auto_scaling_group()
+   
+    def scale_up(self):
+        response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
+        print(response)
+    
+    def scale_down(self):
+        response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - 1))
+        print(response)
+
 if __name__ == '__main__':
     app = App("engine-asg", "sa-east-1")
     app.create_files()
     app.read_instances()
+    print("-----")
+    app.create_files()
+    app.read_instances()
+    print("-----")
+    app.create_files()
+    app.read_instances()
+    print("-----")
+    app.create_files()
+    app.read_instances()
+    #app.scale_up()
+    #app.scale_down()
