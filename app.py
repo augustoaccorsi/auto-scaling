@@ -166,7 +166,9 @@ class App():
             ], StartTime=start_time, EndTime=end_time, Period=60, Statistics=[statistics]) 
 
     def read_instances(self):
+        count = 0
         for instance in self._instances:
+            count +=1
             end_time = datetime.datetime.utcnow()
             
             start_time = end_time - datetime.timedelta(seconds=120)
@@ -182,7 +184,7 @@ class App():
     
             date_hour = end_time.split("T")
             
-            print("Instance "+instance.getInstanceId())
+            print("Instance "+str(count)+":  "+instance.getInstanceId())
             print("Lifecycle State: "+instance.getLifecycleState())
     
             if(instance.getLifecycleState() == "InService"):
@@ -222,7 +224,7 @@ class App():
                     packetOut = None
 
                 self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
-
+                print()
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
 
         if autoscaling.process() == True:
@@ -240,14 +242,5 @@ if __name__ == '__main__':
     app = App("engine-asg", "sa-east-1")
     app.create_files()
     app.read_instances()
-    print("-----")
-    app.create_files()
-    app.read_instances()
-    print("-----")
-    app.create_files()
-    app.read_instances()
-    print("-----")
-    app.create_files()
-    app.read_instances()
     #app.scale_up()
-    #app.scale_down()
+    app.scale_down()
