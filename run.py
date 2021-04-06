@@ -1,5 +1,4 @@
-import os, subprocess
-from apscheduler.schedulers.blocking import BlockingScheduler
+import asyncio
 from app import App
 
 auto_scaling_group = "os.environ['AUTO_SCALING_GROUP']"
@@ -12,34 +11,48 @@ env = "dev" #os.environ['ENV']
 class Run:
     def __init__(self):        
         #self._app = App(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
-        self._app = App("engine-asg", "sa-east-1") 
+        self._app = App("engine-asg", "sa-east-1")
+        self._localApp = App("engine-asg", "sa-east-1") 
 
-    def auto_scaling_check(self):
-        print("Executing Analysis on Auto Scaling Group "+auto_scaling_group)
-        self._app.create_files()
-        self._app.read_instances()
-        print("Analysis Completed")
-        print("----------------------------------")
+    async def auto_scaling_check(self):
+        while True:
+            print("Executing Analysis on Auto Scaling Group "+auto_scaling_group)
+            self._app.create_files()
+            self._app.read_instances()
+            print("Analysis Completed")
+            print("----------------------------------")
+            await asyncio.sleep(20)
 
-    def auto_scaling_check_local(self):
-        print("Executing Analysis on Auto Scaling Group "+"engine-asg")
-        app = App("engine-asg", "sa-east-1")
-        app.create_files()
-        app.read_instances()
-        print("Analysis Completed")
-        print("----------------------------------")
+    async def auto_scaling_check_local(self):
+        while True:
+            print("Executing Analysis on Auto Scaling Group "+"engine-asg")
+            self._localApp.create_files()
+            self._localApp.read_instances()
+            print("Analysis Completed")
+            print("----------------------------------")
+            await asyncio.sleep(20)
 
 if __name__ == '__main__':
     run = Run()
     if env == 'dev':
-        print("----------------------------------")   
-        run.auto_scaling_check_local()
-        scheduler = BlockingScheduler()
-        scheduler.add_job(run.auto_scaling_check_local, 'interval', minutes=1)
-        scheduler.start()
+        print("----------------------------------")
+        loop = asyncio.get_event_loop()
+        try:
+            asyncio.ensure_future(run.auto_scaling_check_local())
+            loop.run_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            print("Closing Loop")
+            loop.close()
     else:
         print("----------------------------------")
-        run.auto_scaling_check()
-        scheduler = BlockingScheduler()
-        scheduler.add_job(run.auto_scaling_check, 'interval', minutes=1)
-        scheduler.start()
+        loop = asyncio.get_event_loop()
+        try:
+            asyncio.ensure_future(run.auto_scaling_check())
+            loop.run_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            print("Closing Loop")
+            loop.close()
