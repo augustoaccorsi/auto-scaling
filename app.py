@@ -79,7 +79,7 @@ class App():
                 status = self._ec2.describe_instance_status(InstanceIds=[intance['InstanceId']])
                 inst.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
             except:
-                inst.setStatus("Not Passed")
+                inst.setStatus("-")
 
             intancesList.append(inst)
             self._instances.append(inst)
@@ -210,7 +210,7 @@ class App():
                 status = self._ec2.describe_instance_status(InstanceIds=[instance.getInstanceId()])
                 instance.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
             except:
-                instance.setStatus("Not Passed")
+                instance.setStatus("-")
 
 
             print("Instance "+str(count)+":  "+instance.getInstanceId())
@@ -258,7 +258,6 @@ class App():
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
 
         if autoscaling.process() == True:
-            print("TRUE")
             self.describe().build_auto_scaling_group()      
 
    

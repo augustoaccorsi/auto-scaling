@@ -28,14 +28,20 @@ class Autoscaling:
         print(self._terminated)
         
         
+    def clearTriggerUp(self):
+        for instance in self._instances:
+            instance.clearTriggerUp()
+    
     def clearTriggerDown(self):
         for instance in self._instances:
             instance.clearTriggerDown()
 
-    def scale_up(self):
-        self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
-        print("Autoscaling Group scalled up, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() + 1)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() + 1))
-    
+    def scale_up(self, instancesUp):
+        self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
+        print("Autoscaling Group scalled up, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
+        self.clearTriggerUp()
+        return True
+
     def scale_down(self, instancesDown):
         if self._auto_scaling_group.getDesiredCapacity() > 1:
             self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - instancesDown))
@@ -45,15 +51,11 @@ class Autoscaling:
             return True
 
     def reactive_scale(self, instance): # colocar mais uma métrica se possível
-        '''
         if instance.getCpuUtilization() >= 70:
             instance.incrementTriggerUp()
-            print("up trigger: "+str(instance.getTriggerUp()))
-            if instance.getTriggerUp() == 3:
-                #self.scale_up()
-                instance.clearTriggerUp()
-                return True
-        '''  
+            print("["+instance.getInstanceId()+"] scale up trigger: "+str(instance.getTriggerUp()))
+            return True
+
         count = 0
         for inst in self._instances:
             if inst.getLifecycleState() == "Running" and inst.getStatus() == "Passed":
@@ -62,32 +64,45 @@ class Autoscaling:
         if instance.getCpuUtilization() <= 30 and count >= 2:
             instance.incrementTriggerDown()
             print("["+instance.getInstanceId()+"] scale down trigger: "+str(instance.getTriggerDown()))
-                #self.scale_down()
-                #self.clearTriggerDown()
-                #self.setOldestInstance()
-    
-    def proactive_scale(self):
-        print("TODO")       
+            return True
+
+        return False
+
+    def proactive_scale(self, instance):
+        return False
 
     def process(self):
 
         result = False
         for instance in self._instances:
             if instance.getLifecycleState() == "Running" and instance.getStatus() == "Passed":
-              self.reactive_scale(instance)
+              reactive = self.reactive_scale(instance)
+              proactive = self.proactive_scale(instance)
         instancesDown = 0
         instancesUp = 0
-        for instance in self._instances:
-            if instance.getTriggerDown() == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE:
-                instancesDown +=1
-            if instance.getTriggerUp() == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE:
-                instancesUp +=1
-        
-        if instancesDown > 0:
-           if instancesDown == len(self._instances):
-               result = self.scale_down(len(self._instances) - 1)
-           else:
-                result = self.scale_down(instancesDown)
+
+        if proactive:
+            print("TODO PROACTIVE")
+        elif reactive:
+            for instance in self._instances:
+                if instance.getTriggerDown() == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE:
+                    instancesDown +=1
+                if instance.getTriggerUp() == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE:
+                    instancesUp +=1
+            
+            if instancesDown > 0:
+                if instancesDown == len(self._instances):
+                    result = self.scale_down(len(self._instances) - 1)
+                else:
+                    result = self.scale_down(instancesDown)
+
+                if instancesUp > 0:
+                    if instancesUp == 1:
+                        print("here")
+                        result = self.scale_up(1)
+                    else:
+                        print("here2")
+                        result = self.scale_up(instancesUp)
 
         return result
         
