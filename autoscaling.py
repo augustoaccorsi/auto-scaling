@@ -61,7 +61,7 @@ class Autoscaling:
 
         if instance.getCpuUtilization() <= 30 and count >= 2:
             instance.incrementTriggerDown()
-            print("down trigger: "+str(instance.getTriggerDown()))
+            print("["+instance.getInstanceId()+"] scale down trigger: "+str(instance.getTriggerDown()))
                 #self.scale_down()
                 #self.clearTriggerDown()
                 #self.setOldestInstance()
