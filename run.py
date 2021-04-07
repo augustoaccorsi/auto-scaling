@@ -23,7 +23,7 @@ class Run:
             self._app.read_instances()
             print("Analysis Completed")
             print("----------------------------------")
-            await asyncio.sleep(60)
+            await asyncio.sleep(300)
 
     async def auto_scaling_check_local(self):
         count = 0
@@ -35,7 +35,7 @@ class Run:
             self._localApp.renew_connection()
             print("Analysis Completed")
             print("----------------------------------")
-            await asyncio.sleep(20)
+            await asyncio.sleep(300)
 
 if __name__ == '__main__':
     run = Run()
