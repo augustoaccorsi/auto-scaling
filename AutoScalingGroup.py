@@ -1,4 +1,3 @@
-
 class AutoScalingGroup():
     def __init__(self):
         self._autoScalingGroupName = ""
@@ -166,6 +165,8 @@ class Instance:
         self._networkPacketsOut = ""
         self._triggerUp = 0
         self._triggerDown = 0
+        self._launchTime = ""
+        self._status = ""
 
     def setInstanceId(self,instanceId):
         self._instanceId = instanceId
@@ -256,6 +257,18 @@ class Instance:
     
     def clearTriggerDown(self):
         self._triggerDown = 0
+    
+    def setLaunchTime(self, launchtime):
+        self._launchTime = launchtime
+    
+    def getLaunchTime(self):
+        return self._launchTime
+
+    def setStatus(self, status):
+        self._status = status
+    
+    def getStatus(self):
+        return self._status
 
 class AvailabilityZone():
     def __init__(self):

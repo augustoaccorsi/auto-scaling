@@ -20,7 +20,6 @@ class Run:
             count +=1
             print("Executing Analysis "+str(count)+" on Auto Scaling Group "+auto_scaling_group)
             print()
-            self._app.create_files()
             self._app.read_instances()
             print("Analysis Completed")
             print("----------------------------------")
@@ -31,9 +30,9 @@ class Run:
         while True:
             count +=1
             print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg")
-            print()
-            self._localApp.create_files()
+            print() 
             self._localApp.read_instances()
+            self._localApp.renew_connection()
             print("Analysis Completed")
             print("----------------------------------")
             await asyncio.sleep(20)

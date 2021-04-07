@@ -8,10 +8,12 @@ class App():
     #def __init__(self, autoscalinggroup, region, accessKeyId, secretAccessKey, sessionToken):
     def __init__(self, autoscalinggroup, region):
         
-        
+        self._autoscalinggroup = autoscalinggroup
         self._asg = boto3.client('autoscaling', region_name=region)
         self._cloud_watch = boto3.client('cloudwatch',  region_name=region)
         self._ec2 = boto3.client('ec2',  region_name=region)
+
+        self._region = region
 
 
         #self._asg = boto3.client('autoscaling', region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
@@ -21,20 +23,24 @@ class App():
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
 
-        self.describe(autoscalinggroup).build_auto_scaling_group()
-
-    def json_converter(self, output):
-        return json.loads(output)
+        self.describe().build_auto_scaling_group()
     
+    def renew_connection(self):
+        self._asg = boto3.client('autoscaling', region_name=self._region)
+        self._cloud_watch = boto3.client('cloudwatch',  region_name=self._region)
+        self._ec2 = boto3.client('ec2',  region_name=self._region)
+
     def clear_all(self):
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
 
-    def describe(self, autoscalinggroup):
+    def describe(self):
         if len(self._instances) > 0:
             self.clear_all()
-        self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[autoscalinggroup], MaxRecords=100)
+            self.renew_connection()
+        self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[self._autoscalinggroup], MaxRecords=100)
+        
         return self
         
     def build_availability_zones(self, availabilityZones):
@@ -62,11 +68,19 @@ class App():
             inst.setInstanceId(intance['InstanceId'])
             inst.setInstanceType(intance['InstanceType'])
             inst.setAvailabilityZone(intance['AvailabilityZone'])
-            status = self._ec2.describe_instances(InstanceIds=[intance['InstanceId']])        
-            inst.setLifecycleState(status['Reservations'][0]['Instances'][0]['State']['Name'].title())
             inst.setHealthStatus(intance['HealthStatus'])
             inst.setLaunchConfigurationName(intance['LaunchConfigurationName'])
             inst.setProtectedFromScaleIn(intance['ProtectedFromScaleIn'])
+
+            state = self._ec2.describe_instances(InstanceIds=[intance['InstanceId']])
+            inst.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
+            inst.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
+            try:
+                status = self._ec2.describe_instance_status(InstanceIds=[intance['InstanceId']])
+                inst.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
+            except:
+                inst.setStatus("Not Passed")
+
             intancesList.append(inst)
             self._instances.append(inst)
 
@@ -115,6 +129,8 @@ class App():
         self._auto_scaling_group.setTerminationPolicies(self._auto_scaling_info['AutoScalingGroups'][0]['TerminationPolicies'])
         self._auto_scaling_group.setNewInstancesProtectedFromScaleIn(self._auto_scaling_info['AutoScalingGroups'][0]['NewInstancesProtectedFromScaleIn'])
         self._auto_scaling_group.setServiceLinkedRoleARN(self._auto_scaling_info['AutoScalingGroups'][0]['ServiceLinkedRoleARN'])
+
+        self.create_files()
 
     def create_files(self):
         for instance in self._instances:
@@ -187,8 +203,19 @@ class App():
     
             date_hour = end_time.split("T")
             
+            state = self._ec2.describe_instances(InstanceIds=[instance.getInstanceId()])
+            instance.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
+            instance.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
+            try:
+                status = self._ec2.describe_instance_status(InstanceIds=[instance.getInstanceId()])
+                instance.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
+            except:
+                instance.setStatus("Not Passed")
+
+
             print("Instance "+str(count)+":  "+instance.getInstanceId())
-            print("Lifecycle State: "+instance.getLifecycleState())
+            print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getStatus())
+            print("Launch Time: "+instance.getLaunchTime().strftime('%Y-%m-%dT%H:%M:%SZ'))
     
             try:
                 cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
@@ -227,10 +254,13 @@ class App():
 
             self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
             print()
+
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
 
         if autoscaling.process() == True:
-            self.describe(self._auto_scaling_group.getAutoScalingGroupName()).build_auto_scaling_group()
+            print("TRUE")
+            self.describe().build_auto_scaling_group()      
+
    
     def scale_up(self):
         response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
