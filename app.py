@@ -1,6 +1,6 @@
 import json, os, xlsxwriter, datetime, timedelta, boto3, sys
 from openpyxl import load_workbook
-from autoScalingGroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
+from autoscalinggroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
 from autoscaling import Autoscaling
 
 class App():

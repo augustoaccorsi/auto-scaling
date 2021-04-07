@@ -1,5 +1,5 @@
 import datetime, timedelta
-from autoScalingGroup import Instance
+from autoscalinggroup import Instance
 
 class Autoscaling:
     def __init__(self, instances, autoScalingGroup, autoScalingClient):
@@ -26,7 +26,6 @@ class Autoscaling:
                self._terminated.append(instance.getInstanceId())
 
         print(self._terminated)
-        
         
     def clearTriggerUp(self):
         for instance in self._instances:
