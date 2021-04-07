@@ -1,4 +1,4 @@
-import json, os, xlsxwriter, datetime, timedelta, boto3
+import json, os, xlsxwriter, datetime, timedelta, boto3, sys
 from openpyxl import load_workbook
 from autoScalingGroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
 from autoscaling import Autoscaling
@@ -272,7 +272,12 @@ class App():
 
 if __name__ == '__main__':
     app = App("engine-asg", "sa-east-1")
-    app.create_files()
-    app.read_instances()
-    app.scale_up()
-    #app.scale_down()
+    
+    try:
+        if sys.argv[1] == "up":
+            app.scale_up()
+        if sys.argv[1] == "down":
+            app.scale_down()
+    except:
+        app.create_files()
+        app.read_instances()
