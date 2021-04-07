@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, datetime
 from app import App
 
 auto_scaling_group = "os.environ['AUTO_SCALING_GROUP']"
@@ -18,7 +18,7 @@ class Run:
         count = 0
         while True:
             count +=1
-            print("Executing Analysis "+str(count)+" on Auto Scaling Group "+auto_scaling_group)
+            print("Executing Analysis "+str(count)+" on Auto Scaling Group "+auto_scaling_group+" at "+datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'))
             print()
             self._app.read_instances()
             print("Analysis Completed")
@@ -29,7 +29,7 @@ class Run:
         count = 0
         while True:
             count +=1
-            print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg")
+            print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg"+" at "+datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'))
             print() 
             self._localApp.read_instances()
             self._localApp.renew_connection()
