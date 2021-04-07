@@ -20,7 +20,7 @@ try:
             call_request_get(i)  
 except:
     minutes = sys.argv[1].split("min")
-    finish_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes[0])
+    finish_time = datetime.datetime.now() + datetime.timedelta(minutes=int(minutes[0]))
     i = 0
     while datetime.datetime.now() < finish_time:
         if sys.argv[2] == "post":
