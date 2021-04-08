@@ -1,4 +1,4 @@
-import asyncio, datetime
+import asyncio, datetime, sys
 from app import App
 
 auto_scaling_group = "os.environ['AUTO_SCALING_GROUP']"
@@ -12,7 +12,10 @@ class Run:
     def __init__(self):        
         #self._app = App(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
         self._app = App("engine-asg", "sa-east-1")
-        self._localApp = App("engine-asg", "sa-east-1")     
+        self._localApp = App("engine-asg", "sa-east-1")
+
+    def revew_local(self):
+        self._localApp = App("engine-asg", "sa-east-1")
 
     async def auto_scaling_check(self):
         count = 0
@@ -35,7 +38,10 @@ class Run:
             self._localApp.renew_connection()
             print("Analysis Completed")
             print("----------------------------------")
-            await asyncio.sleep(300)
+            try:
+                await asyncio.sleep(int(sys.argv[1]))
+            except:
+                await asyncio.sleep(5)
 
 if __name__ == '__main__':
     run = Run()

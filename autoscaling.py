@@ -8,6 +8,8 @@ class Autoscaling:
         self._autoScalingClient = autoScalingClient
         self._terminated = [] 
 
+        self._up = False
+
         self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE = 3
 
     def setTerminatedInstances(self, instancesDown):
@@ -39,6 +41,7 @@ class Autoscaling:
         self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
         print("Autoscaling Group scalled up, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
         self.clearTriggerUp()
+        self._up = True
         return True
 
     def scale_down(self, instancesDown):
@@ -80,28 +83,27 @@ class Autoscaling:
         instancesDown = 0
         instancesUp = 0
 
-        if proactive:
+        if proactive == True:
             print("TODO PROACTIVE")
-        elif reactive:
+        elif reactive == True:
             for instance in self._instances:
                 if instance.getTriggerDown() == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE:
                     instancesDown +=1
                 if instance.getTriggerUp() == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE:
+                    print("hehe")
                     instancesUp +=1
-            
+
             if instancesDown > 0:
                 if instancesDown == len(self._instances):
                     result = self.scale_down(len(self._instances) - 1)
                 else:
                     result = self.scale_down(instancesDown)
 
-                if instancesUp > 0:
-                    if instancesUp == 1:
-                        print("here")
-                        result = self.scale_up(1)
-                    else:
-                        print("here2")
-                        result = self.scale_up(instancesUp)
+            if instancesUp > 0:
+                if instancesUp == 1:
+                    result = self.scale_up(1)
+                else:
+                    result = self.scale_up(instancesUp)
 
         return result
         

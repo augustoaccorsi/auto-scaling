@@ -15,6 +15,7 @@ class App():
 
         self._region = region
 
+        self._up = False
 
         #self._asg = boto3.client('autoscaling', region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
         #self._cloud_watch = boto3.client('cloudwatch',  region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
@@ -36,10 +37,12 @@ class App():
         self._instances = []
 
     def describe(self):
+        '''
         if len(self._instances) > 0:
             self.clear_all()
             self.renew_connection()
-        self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[self._autoscalinggroup], MaxRecords=100)
+        '''
+        self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[self._autoscalinggroup])
         
         return self
         
@@ -62,29 +65,29 @@ class App():
         return loadBalancersList
     
     def build_instances(self, instances):
-        intancesList = []
-        for intance in instances:
+        instancesList = []
+        for instance in instances:
             inst = Instance()
-            inst.setInstanceId(intance['InstanceId'])
-            inst.setInstanceType(intance['InstanceType'])
-            inst.setAvailabilityZone(intance['AvailabilityZone'])
-            inst.setHealthStatus(intance['HealthStatus'])
-            inst.setLaunchConfigurationName(intance['LaunchConfigurationName'])
-            inst.setProtectedFromScaleIn(intance['ProtectedFromScaleIn'])
+            inst.setInstanceId(instance['InstanceId'])
+            inst.setInstanceType(instance['InstanceType'])
+            inst.setAvailabilityZone(instance['AvailabilityZone'])
+            inst.setHealthStatus(instance['HealthStatus'])
+            inst.setLaunchConfigurationName(instance['LaunchConfigurationName'])
+            inst.setProtectedFromScaleIn(instance['ProtectedFromScaleIn'])
 
-            state = self._ec2.describe_instances(InstanceIds=[intance['InstanceId']])
+            state = self._ec2.describe_instances(InstanceIds=[instance['InstanceId']])
             inst.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
             inst.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
             try:
-                status = self._ec2.describe_instance_status(InstanceIds=[intance['InstanceId']])
+                status = self._ec2.describe_instance_status(InstanceIds=[instance['InstanceId']])
                 inst.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
             except:
                 inst.setStatus("-")
 
-            intancesList.append(inst)
+            instancesList.append(inst)
             self._instances.append(inst)
 
-        return intancesList
+        return instancesList
 
     def biuld_metrics(self, metrics):
         metricsList = []
@@ -173,7 +176,6 @@ class App():
         workbook.save(filename = 'data-set\\'+instance+'.xlsx')
         workbook.close()
 
-
     def get_metric(self, metric, instance, start_time, end_time, statistics):
         return self._cloud_watch.get_metric_statistics(Namespace='AWS/EC2',
             MetricName=metric,
@@ -187,7 +189,8 @@ class App():
     def read_instances(self):
         count = 0
         for instance in self._instances:
-            count +=1
+            print(len(self._instances))
+
             end_time = datetime.datetime.utcnow()
             
             start_time = end_time - datetime.timedelta(seconds=120)
@@ -214,7 +217,7 @@ class App():
 
 
             print("Instance "+str(count)+":  "+instance.getInstanceId())
-            print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getStatus())
+            print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
             print("Launch Time: "+instance.getLaunchTime().strftime('%Y-%m-%dT%H:%M:%SZ'))
     
             try:
@@ -254,12 +257,15 @@ class App():
 
             self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
             print()
-
+        
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
 
         if autoscaling.process() == True:
-            self.describe().build_auto_scaling_group()      
-
+            self._up = autoscaling._up
+            self.describe().build_auto_scaling_group()
+        
+        response = self._asg.describe_instance_refreshes(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName())
+        print(response)
    
     def scale_up(self):
         response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
