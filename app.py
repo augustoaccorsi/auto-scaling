@@ -189,7 +189,6 @@ class App():
     def read_instances(self):
         count = 0
         for instance in self._instances:
-            print(len(self._instances))
 
             end_time = datetime.datetime.utcnow()
             
@@ -264,8 +263,7 @@ class App():
             self._up = autoscaling._up
             self.describe().build_auto_scaling_group()
         
-        response = self._asg.describe_instance_refreshes(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName())
-        print(response)
+        self._asg.describe_instance_refreshes(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName())
    
     def scale_up(self):
         response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
