@@ -2,16 +2,21 @@ import json, os, xlsxwriter, datetime, timedelta, boto3, sys
 from openpyxl import load_workbook
 from autoscalinggroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
 from autoscaling import Autoscaling
+import weakref
 
 class App():
-
+    _alive = []
     #def __init__(self, autoscalinggroup, region, accessKeyId, secretAccessKey, sessionToken):
-    def __init__(self, autoscalinggroup, region):
+    def __new__(self, autoscalinggroup, region):
         
+        self = super().__new__(self)
+        App._alive.append(self)
+
         self._autoscalinggroup = autoscalinggroup
         self._asg = boto3.client('autoscaling', region_name=region)
         self._cloud_watch = boto3.client('cloudwatch',  region_name=region)
-        self._ec2 = boto3.client('ec2',  region_name=region)
+        self._ec2 = boto3.client('ec2', region_name=region)
+        self._elb = boto3.client('elb', region_name=region)
 
         self._region = region
 
@@ -23,8 +28,14 @@ class App():
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
+        self._instances_ids = dict()
 
         self.describe().build_auto_scaling_group()
+        
+        return weakref.proxy(self)
+    
+    def commit_suicide(self):
+        self._alive.remove(self)
     
     def renew_connection(self):
         self._asg = boto3.client('autoscaling', region_name=self._region)
@@ -35,13 +46,14 @@ class App():
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
+        self._instances_ids = dict()
 
     def describe(self):
-        '''
+        
         if len(self._instances) > 0:
             self.clear_all()
             self.renew_connection()
-        '''
+        
         self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[self._autoscalinggroup])
         
         return self
@@ -61,19 +73,17 @@ class App():
             ldb = LoadBalancer()
             ldb.setLoadBalancer(lb)
             loadBalancersList.append(ldb)
-
+            loadBalancer = (self._elb.describe_load_balancers(LoadBalancerNames=[lb]))
+        self._instances_ids = (loadBalancer['LoadBalancerDescriptions'][0]['Instances'])
         return loadBalancersList
     
     def build_instances(self, instances):
+
+
         instancesList = []
-        for instance in instances:
+        for instance in self._instances_ids:
             inst = Instance()
             inst.setInstanceId(instance['InstanceId'])
-            inst.setInstanceType(instance['InstanceType'])
-            inst.setAvailabilityZone(instance['AvailabilityZone'])
-            inst.setHealthStatus(instance['HealthStatus'])
-            inst.setLaunchConfigurationName(instance['LaunchConfigurationName'])
-            inst.setProtectedFromScaleIn(instance['ProtectedFromScaleIn'])
 
             state = self._ec2.describe_instances(InstanceIds=[instance['InstanceId']])
             inst.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
@@ -189,10 +199,10 @@ class App():
     def read_instances(self):
         count = 0
         for instance in self._instances:
-
+            count+=1
             end_time = datetime.datetime.utcnow()
             
-            start_time = end_time - datetime.timedelta(seconds=120)
+            start_time = end_time - datetime.timedelta(seconds=120) #buscar dados dos ultimos 2 minutos
 
             start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
             end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -258,10 +268,9 @@ class App():
             print()
         
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
-
+        
         if autoscaling.process() == True:
             self._up = autoscaling._up
-            self.describe().build_auto_scaling_group()
         
         self._asg.describe_instance_refreshes(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName())
    
@@ -282,5 +291,11 @@ if __name__ == '__main__':
         if sys.argv[1] == "down":
             app.scale_down()
     except:
-        app.create_files()
-        app.read_instances()
+        print(app)
+        app.commit_suicide()
+        print(app)
+        
+
+
+        #app.create_files()
+        #app.read_instances()

@@ -75,6 +75,8 @@ class Autoscaling:
 
     def process(self):
 
+        reactive = False
+        proactive = False
         result = False
         for instance in self._instances:
             if instance.getLifecycleState() == "Running" and instance.getStatus() == "Passed":

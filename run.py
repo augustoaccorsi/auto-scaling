@@ -1,5 +1,6 @@
 import asyncio, datetime, sys
 from app import App
+import weakref
 
 auto_scaling_group = "os.environ['AUTO_SCALING_GROUP']"
 region = "os.environ['REGION']"
@@ -9,12 +10,14 @@ sessionToken = "os.environ['SESSION_TOKEN']"
 env = "dev" #os.environ['ENV']
 
 class Run:
+
     def __init__(self):        
         #self._app = App(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
         self._app = App("engine-asg", "sa-east-1")
         self._localApp = App("engine-asg", "sa-east-1")
 
     def revew_local(self):
+        self._localApp.commit_suicide()
         self._localApp = App("engine-asg", "sa-east-1")
 
     async def auto_scaling_check(self):
@@ -33,15 +36,22 @@ class Run:
         while True:
             count +=1
             print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg"+" at "+datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'))
-            print() 
+            print()
+            #self._localApp.describe().build_auto_scaling_group()
             self._localApp.read_instances()
-            self._localApp.renew_connection()
+            #if self._localApp._up == True:
+            #    print("kill them all")
+            #    self._localApp.describe().build_auto_scaling_group()
+                #self.revew_local()
             print("Analysis Completed")
             print("----------------------------------")
             try:
                 await asyncio.sleep(int(sys.argv[1]))
             except:
-                await asyncio.sleep(5)
+                try:
+                    await asyncio.sleep(int(sys.argv[1]))
+                except:
+                    await asyncio.sleep(300)
 
 if __name__ == '__main__':
     run = Run()
