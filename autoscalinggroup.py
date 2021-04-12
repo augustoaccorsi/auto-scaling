@@ -22,6 +22,13 @@ class AutoScalingGroup():
         self._terminationPolicies = []
         self._newInstancesProtectedFromScaleIn = ""
         self._serviceLinkedRoleARN = ""
+        self._instanceIds = []
+
+    def appendInstanceId(self, id):
+        self._instanceIds.append(id)
+
+    def getInstanceId(self):
+        return self._instanceIds
 
     def setAutoScalingGroupName(self, autoScalingGroupName):
         self._autoScalingGroupName = autoScalingGroupName

@@ -15,6 +15,7 @@ class Run:
         #self._app = App(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
         self._app = App("engine-asg", "sa-east-1")
         self._localApp = App("engine-asg", "sa-east-1")
+        self._localApp.describe()
 
     def revew_local(self):
         self._localApp.commit_suicide()
@@ -37,8 +38,8 @@ class Run:
             count +=1
             print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg"+" at "+datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'))
             print()
-            #self._localApp.describe().build_auto_scaling_group()
             self._localApp.read_instances()
+            #self._localApp.describe()
             #if self._localApp._up == True:
             #    print("kill them all")
             #    self._localApp.describe().build_auto_scaling_group()

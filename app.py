@@ -22,6 +22,9 @@ class App():
 
         self._up = False
 
+        self.lb_instnaces = []
+        self._lb_name = ""
+
         #self._asg = boto3.client('autoscaling', region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
         #self._cloud_watch = boto3.client('cloudwatch',  region_name=region, aws_access_key_id=accessKeyId, aws_secret_access_key=secretAccessKey, aws_session_token=sessionToken)
 
@@ -30,7 +33,7 @@ class App():
         self._instances = []
         self._instances_ids = dict()
 
-        self.describe().build_auto_scaling_group()
+        self.describe()
         
         return weakref.proxy(self)
     
@@ -45,8 +48,8 @@ class App():
     def clear_all(self):
         self._auto_scaling_info = dict()
         self._auto_scaling_group = AutoScalingGroup()
-        self._instances = []
-        self._instances_ids = dict()
+        #self._instances = []
+        #self._instances_ids = dict()
 
     def describe(self):
         
@@ -55,7 +58,7 @@ class App():
             self.renew_connection()
         
         self._auto_scaling_info = self._asg.describe_auto_scaling_groups(AutoScalingGroupNames=[self._autoscalinggroup])
-        
+        self.build_auto_scaling_group()
         return self
         
     def build_availability_zones(self, availabilityZones):
@@ -74,30 +77,62 @@ class App():
             ldb.setLoadBalancer(lb)
             loadBalancersList.append(ldb)
             loadBalancer = (self._elb.describe_load_balancers(LoadBalancerNames=[lb]))
-        self._instances_ids = (loadBalancer['LoadBalancerDescriptions'][0]['Instances'])
+
+            if not loadBalancer['LoadBalancerDescriptions'][0]['Instances'] in self._instances:
+                self._instances_ids = (loadBalancer['LoadBalancerDescriptions'][0]['Instances'])
+                self._auto_scaling_group.appendInstanceId((loadBalancer['LoadBalancerDescriptions'][0]['Instances']))
+                self._lb_name = (loadBalancer['LoadBalancerDescriptions'][0]['LoadBalancerName'])
+            
         return loadBalancersList
     
     def build_instances(self, instances):
-
-
+        
         instancesList = []
-        for instance in self._instances_ids:
-            inst = Instance()
-            inst.setInstanceId(instance['InstanceId'])
+        for instance in self._instances_ids:      
 
-            state = self._ec2.describe_instances(InstanceIds=[instance['InstanceId']])
-            inst.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
-            inst.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
+            if instance['InstanceId'] not in self.lb_instnaces:
+                
+                self.lb_instnaces.append(instance['InstanceId'])
+
+                inst = Instance()
+                inst.setInstanceId(instance['InstanceId'])
+
+                state = self._ec2.describe_instances(InstanceIds=[instance['InstanceId']])
+                inst.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
+                inst.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
+
+                health = self._elb.describe_instance_health(LoadBalancerName=self._lb_name, Instances=[{'InstanceId': instance['InstanceId']}])
+                inst.setHealthStatus(health['InstanceStates'][0]['State'])
+
+                try:
+                    status = self._ec2.describe_instance_status(InstanceIds=[instance['InstanceId']])
+                    inst.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
+                except:
+                    inst.setStatus("-")
+
+                instancesList.append(inst)
+                self._instances.append(inst)
+
+        self.update_instances()
+
+        return self._instances
+
+    def update_instances(self):
+        for instance in self._instances:
+            
+            state = self._ec2.describe_instances(InstanceIds=[instance.getInstanceId()])
+            instance.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
+            instance.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
+
+            health = self._elb.describe_instance_health(LoadBalancerName=self._lb_name, Instances=[{'InstanceId': instance.getInstanceId()}])
+            instance.setHealthStatus(health['InstanceStates'][0]['State'])
+
             try:
-                status = self._ec2.describe_instance_status(InstanceIds=[instance['InstanceId']])
-                inst.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
+                status = self._ec2.describe_instance_status(InstanceIds=instance.getInstanceId())
+                instance.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
             except:
-                inst.setStatus("-")
-
-            instancesList.append(inst)
-            self._instances.append(inst)
-
-        return instancesList
+                instance.setStatus("-")
+        return self._instances
 
     def biuld_metrics(self, metrics):
         metricsList = []
@@ -268,12 +303,12 @@ class App():
             print()
         
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
+        autoscaling.process()
         
-        if autoscaling.process() == True:
-            self._up = autoscaling._up
-        
-        self._asg.describe_instance_refreshes(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName())
-   
+        self.describe()
+
+        #self._asg.describe_instance_refreshes(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName())
+
     def scale_up(self):
         response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
         print(response)

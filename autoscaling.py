@@ -60,7 +60,7 @@ class Autoscaling:
 
         count = 0
         for inst in self._instances:
-            if inst.getLifecycleState() == "Running" and inst.getStatus() == "Passed":
+            if inst.getLifecycleState() == "Running" and inst.getHealthStatus() == "InService" and inst.getStatus() == "Passed":
                 count+=1
 
         if instance.getCpuUtilization() <= 30 and count >= 2:
@@ -79,7 +79,7 @@ class Autoscaling:
         proactive = False
         result = False
         for instance in self._instances:
-            if instance.getLifecycleState() == "Running" and instance.getStatus() == "Passed":
+            if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and instance.getStatus() == "Passed":
               reactive = self.reactive_scale(instance)
               proactive = self.proactive_scale(instance)
         instancesDown = 0
