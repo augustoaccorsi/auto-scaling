@@ -45,7 +45,7 @@ env = "dev" #os.environ['ENV']
 class Run:
 
     def __init__(self):        
-        self._urlPost = "http://augusto-accorsi-engine-elb-206353658.sa-east-1.elb.amazonaws.com:5000/engine/mandelbrot?max_iter=845&width=845&height=845"
+        self._urlPost = "http://augusto-accorsi-engine-elb-206353658.sa-east-1.elb.amazonaws.com:5000/engine/mandelbrot?max_iter=1000&width=1000&height=1000"
         self._urlGet = "http://augusto-accorsi-engine-elb-206353658.sa-east-1.elb.amazonaws.com:5000"
 
     def call_request_get(self, count):
