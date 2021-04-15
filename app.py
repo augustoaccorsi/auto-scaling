@@ -182,43 +182,47 @@ class App():
 
     def create_files(self):
         for instance in self._instances:
-            if not os.path.isfile('data-set\\'+instance.getInstanceId()+'.xlsx'):
-                workbook = xlsxwriter.Workbook('data-set\\'+instance.getInstanceId()+'.xlsx')
+            if not os.path.isfile('data-set\\data.xlsx'):
+                workbook = xlsxwriter.Workbook('data-set\\data.xlsx')
+            #if not os.path.isfile('data-set\\'+instance.getInstanceId()+'.xlsx'):
+            #    workbook = xlsxwriter.Workbook('data-set\\'+instance.getInstanceId()+'.xlsx')
                 worksheet = workbook.add_worksheet()
     
                 worksheet.write('A1', 'Date')
                 worksheet.write('B1', 'Hour')
-                worksheet.write('C1', 'CPU Utilization')
-                worksheet.write('D1', 'Network In')
-                worksheet.write('E1', 'Network Out')
-                worksheet.write('F1', 'Network Packets In')
-                worksheet.write('G1', 'Network Packets Out')
-                worksheet.write('H1', 'Lifecycle State')
+                worksheet.write('C1', 'Instance')
+                worksheet.write('D1', 'CPU Utilization')
+                worksheet.write('E1', 'Network In')
+                worksheet.write('F1', 'Network Out')
+                worksheet.write('G1', 'Network Packets In')
+                worksheet.write('H1', 'Network Packets Out')
+                worksheet.write('I1', 'Lifecycle State')
             
                 workbook.close()
 
     def save_into_file(self, date, hour, cpu, networkIn, networkOut, networkPacketsIn, networkPacketsOut, lifecycleState, instance):
-        workbook = load_workbook(filename = 'data-set\\'+instance+'.xlsx')
+        workbook = load_workbook(filename = 'data-set\\data.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
 
         worksheet.cell(column=1,row=newRowLocation, value=date)
         worksheet.cell(column=2,row=newRowLocation, value=hour)
+        worksheet.cell(column=3,row=newRowLocation, value=instance)
         if cpu != None:
-            worksheet.cell(column=3,row=newRowLocation, value=cpu)
+            worksheet.cell(column=4,row=newRowLocation, value=cpu)
         if networkIn != None:
-            worksheet.cell(column=4,row=newRowLocation, value=networkIn)
+            worksheet.cell(column=5,row=newRowLocation, value=networkIn)
         if networkOut != None:
-            worksheet.cell(column=5,row=newRowLocation, value=networkOut)
+            worksheet.cell(column=6,row=newRowLocation, value=networkOut)
         if networkPacketsIn != None:
-            worksheet.cell(column=6,row=newRowLocation, value=networkPacketsIn)
+            worksheet.cell(column=7,row=newRowLocation, value=networkPacketsIn)
         if networkPacketsOut != None:
-            worksheet.cell(column=7,row=newRowLocation, value=networkPacketsOut)
+            worksheet.cell(column=8,row=newRowLocation, value=networkPacketsOut)
         if lifecycleState != None:
-            worksheet.cell(column=8,row=newRowLocation, value=lifecycleState)
+            worksheet.cell(column=9,row=newRowLocation, value=lifecycleState)
 
-        workbook.save(filename = 'data-set\\'+instance+'.xlsx')
+        workbook.save(filename = 'data-set\\data.xlsx')
         workbook.close()
 
     def get_metric(self, metric, instance, start_time, end_time, statistics):
@@ -229,85 +233,91 @@ class App():
                     'Name': 'InstanceId',
                     'Value': instance
                 },
-            ], StartTime=start_time, EndTime=end_time, Period=60, Statistics=[statistics]) 
+            ], StartTime=start_time, EndTime=end_time, Period=120, Statistics=[statistics]) 
 
     def read_instances(self):
         count = 0
         for instance in self._instances:
-            count+=1
-            end_time = datetime.datetime.utcnow()
-            
-            start_time = end_time - datetime.timedelta(seconds=120) #buscar dados dos ultimos 2 minutos
 
-            start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-            end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-         
-            cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
-            networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
-            networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Maximum")
-            networkPacketsIn =  self.get_metric("NetworkPacketsIn", instance.getInstanceId(), start_time, end_time, "Average")
-            networkPacketsOut =  self.get_metric("NetworkPacketsOut", instance.getInstanceId(), start_time, end_time, "Average")
-    
-            date_hour = end_time.split("T")
+            if instance.getLifecycleState() == "Terminated":
+                self._instances.remove(instance)
+            else:
+
+                count+=1
+                end_time = datetime.datetime.utcnow()
+                
+                start_time = end_time - datetime.timedelta(seconds=120) #buscar dados dos ultimos 2 minutos
+
+                start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+                end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
             
-            state = self._ec2.describe_instances(InstanceIds=[instance.getInstanceId()])
-            instance.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
-            instance.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
-            try:
-                status = self._ec2.describe_instance_status(InstanceIds=[instance.getInstanceId()])
-                instance.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
-            except:
-                instance.setStatus("-")
+                cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
+                networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
+                networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Maximum")
+                #cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
+                #networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
+                #networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Maximum")
+                networkPacketsIn =  self.get_metric("NetworkPacketsIn", instance.getInstanceId(), start_time, end_time, "Average")
+                networkPacketsOut =  self.get_metric("NetworkPacketsOut", instance.getInstanceId(), start_time, end_time, "Average")
+        
+                date_hour = end_time.split("T")
+                
+                state = self._ec2.describe_instances(InstanceIds=[instance.getInstanceId()])
+                instance.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
+                instance.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
+                try:
+                    status = self._ec2.describe_instance_status(InstanceIds=[instance.getInstanceId()])
+                    instance.setStatus(status['InstanceStatuses'][0]['InstanceStatus']['Details'][0]['Status'].title())
+                except:
+                    instance.setStatus("-")
 
 
-            print("Instance "+str(count)+":  "+instance.getInstanceId())
-            print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
-            print("Launch Time: "+instance.getLaunchTime().strftime('%Y-%m-%dT%H:%M:%SZ'))
-    
-            try:
-                cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
-                print("CPU Usage: "+str(cpuUtilization)+"%")
-                instance.setCpuUtilization(cpuUtilization)
-            except:
-                cpuUtilization = None
-            
-            try:
-                netIn = str(networkIn['Datapoints'][0]['Maximum'])
-                print("Network In: "+netIn+" bytes")
-                instance.setNetworkIn(netIn)
-            except:
-                netIn = None
-            
-            try:
-                netOut = str(networkOut['Datapoints'][0]['Maximum'])
-                print("Network Out: "+netOut+" bytes")
-                instance.setNetworkOut(netOut)
-            except:
-                netOut = None
-            
-            try:
-                packetIn = str(networkPacketsIn['Datapoints'][0]['Average'])
-                print("Network Packages In: "+packetIn)
-                instance.setNetworkPacketsIn(packetIn)
-            except:
-                packetIn = None
-            
-            try:
-                packetOut = str(networkPacketsOut['Datapoints'][0]['Average'])
-                print("Network Packages Out: "+packetOut)
-                instance.setNetworkPacketsOut(packetOut)
-            except:
-                packetOut = None
+                print("Instance "+str(count)+":  "+instance.getInstanceId())
+                print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
+                print("Launch Time: "+instance.getLaunchTime().strftime('%Y-%m-%dT%H:%M:%SZ'))
+        
+                try:
+                    cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
+                    print("CPU Usage: "+str(cpuUtilization)+"%")
+                    instance.setCpuUtilization(cpuUtilization)
+                except:
+                    cpuUtilization = None
+                
+                try:
+                    netIn = str(networkIn['Datapoints'][0]['Maximum'])
+                    print("Network In: "+netIn+" bytes")
+                    instance.setNetworkIn(netIn)
+                except:
+                    netIn = None
+                
+                try:
+                    netOut = str(networkOut['Datapoints'][0]['Maximum'])
+                    print("Network Out: "+netOut+" bytes")
+                    instance.setNetworkOut(netOut)
+                except:
+                    netOut = None
+                
+                try:
+                    packetIn = str(networkPacketsIn['Datapoints'][0]['Average'])
+                    print("Network Packages In: "+packetIn)
+                    instance.setNetworkPacketsIn(packetIn)
+                except:
+                    packetIn = None
+                
+                try:
+                    packetOut = str(networkPacketsOut['Datapoints'][0]['Average'])
+                    print("Network Packages Out: "+packetOut)
+                    instance.setNetworkPacketsOut(packetOut)
+                except:
+                    packetOut = None
 
-            self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
-            print()
+                self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
+                print()
         
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
         autoscaling.process()
         
         self.describe()
-
-        #self._asg.describe_instance_refreshes(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName())
 
     def scale_up(self):
         response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))

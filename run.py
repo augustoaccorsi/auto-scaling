@@ -39,11 +39,6 @@ class Run:
             print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg"+" at "+datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'))
             print()
             self._localApp.read_instances()
-            #self._localApp.describe()
-            #if self._localApp._up == True:
-            #    print("kill them all")
-            #    self._localApp.describe().build_auto_scaling_group()
-                #self.revew_local()
             print("Analysis Completed")
             print("----------------------------------")
             try:
@@ -52,7 +47,7 @@ class Run:
                 try:
                     await asyncio.sleep(int(sys.argv[1]))
                 except:
-                    await asyncio.sleep(300)
+                    await asyncio.sleep(120)
 
 if __name__ == '__main__':
     run = Run()
