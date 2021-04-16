@@ -188,39 +188,38 @@ class App():
             #    workbook = xlsxwriter.Workbook('data-set\\'+instance.getInstanceId()+'.xlsx')
                 worksheet = workbook.add_worksheet()
     
-                worksheet.write('A1', 'Date')
-                worksheet.write('B1', 'Hour')
-                worksheet.write('C1', 'Instance')
-                worksheet.write('D1', 'CPU Utilization')
-                worksheet.write('E1', 'Network In')
-                worksheet.write('F1', 'Network Out')
-                worksheet.write('G1', 'Network Packets In')
-                worksheet.write('H1', 'Network Packets Out')
-                worksheet.write('I1', 'Lifecycle State')
+                worksheet.write('A1', 'Datetime')
+                worksheet.write('B1', 'CPU Utilization')
+                worksheet.write('C1', 'Network In')
+                worksheet.write('D1', 'Network Out')
+                worksheet.write('E1', 'Network Packets In')
+                worksheet.write('F1', 'Network Packets Out')
+                worksheet.write('G1', 'Instance')
+                worksheet.write('H1', 'Lifecycle State')
             
                 workbook.close()
 
-    def save_into_file(self, date, hour, cpu, networkIn, networkOut, networkPacketsIn, networkPacketsOut, lifecycleState, instance):
+    def save_into_file(self, datetime, cpu, networkIn, networkOut, networkPacketsIn, networkPacketsOut, lifecycleState, instance):
         workbook = load_workbook(filename = 'data-set\\data.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
 
-        worksheet.cell(column=1,row=newRowLocation, value=date)
-        worksheet.cell(column=2,row=newRowLocation, value=hour)
-        worksheet.cell(column=3,row=newRowLocation, value=instance)
+        worksheet.cell(column=1,row=newRowLocation, value=datetime)
         if cpu != None:
-            worksheet.cell(column=4,row=newRowLocation, value=cpu)
+            worksheet.cell(column=2,row=newRowLocation, value=cpu)
         if networkIn != None:
-            worksheet.cell(column=5,row=newRowLocation, value=networkIn)
+            worksheet.cell(column=3,row=newRowLocation, value=networkIn)
         if networkOut != None:
-            worksheet.cell(column=6,row=newRowLocation, value=networkOut)
+            worksheet.cell(column=4,row=newRowLocation, value=networkOut)
         if networkPacketsIn != None:
-            worksheet.cell(column=7,row=newRowLocation, value=networkPacketsIn)
+            worksheet.cell(column=5,row=newRowLocation, value=networkPacketsIn)
         if networkPacketsOut != None:
-            worksheet.cell(column=8,row=newRowLocation, value=networkPacketsOut)
+            worksheet.cell(column=6,row=newRowLocation, value=networkPacketsOut)
+        
+        worksheet.cell(column=7,row=newRowLocation, value=instance)
         if lifecycleState != None:
-            worksheet.cell(column=9,row=newRowLocation, value=lifecycleState)
+            worksheet.cell(column=8,row=newRowLocation, value=lifecycleState)
 
         workbook.save(filename = 'data-set\\data.xlsx')
         workbook.close()
@@ -241,6 +240,7 @@ class App():
 
             if instance.getLifecycleState() == "Terminated":
                 self._instances.remove(instance)
+                break
             else:
 
                 count+=1
@@ -311,8 +311,9 @@ class App():
                 except:
                     packetOut = None
 
-                self.save_into_file(date_hour[0], date_hour[1][:-1], cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
-                print()
+                if instance.getLifecycleState() != "Terminated":
+                    self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
+                    print()
         
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
         autoscaling.process()
