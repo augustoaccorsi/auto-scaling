@@ -3,5 +3,8 @@
 from random import seed
 from random import randint
 # seed random number generator
-seed(1)
-# generate some integers
+
+minutes = randint(1, 20)
+sleep = (randint(1, 20) * 60)
+print("calls: "+str(minutes))
+print("sleep: "+str(sleep))

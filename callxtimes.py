@@ -19,13 +19,11 @@ class Run:
         
     async def call_url(self, type):
         count = 0
-        seed(1)
-        minutes = randint(1, 20)
-        sleep = (randint(1, 20) * 60)
-        print("calls: "+str(minutes))
-        print("sleep: "+str(sleep))
         while True:
-            minutes = randint(0, 10)
+            minutes = randint(1, 20)
+            sleep = (randint(1, 20) * 60)
+            print("calls: "+str(minutes))
+            print("sleep: "+str(sleep))
             finish_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
             while datetime.datetime.now() < finish_time:
                 if type == "post":
