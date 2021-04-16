@@ -5,108 +5,106 @@ from statsmodels.tsa.arima_model import ARIMA
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 import warnings
-
-
-data_xls = pd.read_excel('data-set\\test.xlsx', 'Sheet1', dtype=str, index_col=None)
-data_xls.to_csv('data-set\\csvfile.csv', encoding='utf-8', index=False)
-
-df=pd.read_csv('data-set\\csvfile.csv',index_col='Datetime',parse_dates=True)
-#df=df.dropna()
-print('Shape of data',df.shape)
-#df.head()
-print(df.head())
-df
-
-df.asfreq('min')
-
-
-df['CPU Utilization'].plot(figsize=(12,5))
-
-df["CPU Utilization"]
-df = df.cumsum()
-plt.show()
-
-print()
-
 from statsmodels.tsa.stattools import adfuller
 
-def ad_test(dataset):
-     dftest = adfuller(dataset, autolag = 'AIC')
-     print("1. ADF : ",dftest[0])
-     if  dftest[1] < 0.05:
-        print("2. P-Value : "+ str(dftest[1])+" OK")
-     else:
-        print("2. P-Value : ", dftest[1])
-     print("3. Num Of Lags : ", dftest[2])
-     print("4. Num Of Observations Used For ADF Regression:",      dftest[3])
-     print("5. Critical Values :")
-     for key, val in dftest[4].items():
-         print("\t",key, ": ", val)
 
-print("CPU Utilization")
-ad_test(df['CPU Utilization'])
-print()
+class Timeseries():
 
+    def __init__(self, dataset_path, csv_path):
+        self._data_xls = pd.read_excel(dataset_path, 'Sheet1', dtype=str, index_col=None)
+        self._data_xls.to_csv(csv_path, encoding='utf-8', index=False)
 
-warnings.filterwarnings("ignore")
+        self._df=pd.read_csv('data-set\\csvfile.csv',index_col='Datetime',parse_dates=True)
 
-stepwise_fit_cpu = auto_arima(df['CPU Utilization'], trace=True, suppress_warnings=True)
+        self._train = None
+        self._test = None
+        self._pred = None
+        self._model = None
+        self._rmse = None
+        self._start = None
+        self._end = None
 
-print(df.shape)
-train=df.iloc[:-30]
-test=df.iloc[-30:]
-print(train.shape,test.shape)
+        print('Shape of data',self._df.shape)
+#self._df=self._df.dropna()
+    def print_head(self):
+        print(self._df.head())
 
+    def plot_graph(self, dataset):
+        self._df.asfreq('min')
 
-model=ARIMA(train['CPU Utilization'],order=(2,1,2))
-model=model.fit()
-model.summary()
+        self._df[dataset].plot(figsize=(12,5))
+        self._df[dataset]
+        self._df = self._df.cumsum()
 
-start=len(train)
-end=len(train)+len(test)-1
-pred=model.predict(start=start,end=end,typ='levels').rename('ARIMA Predictions')
-print(pred)
-pred.plot(legend=True)
+        plt.ylabel(dataset)
+        plt.xlabel("Datetime (minutes)")
 
-test.asfreq('min')
+        plt.show()
 
-test['CPU Utilization'].plot(figsize=(12,5))
+    def stationary_test(self, dataset):
+        print(dataset)
+        dftest = adfuller(self._df[dataset], autolag = 'AIC')
+        print("1. ADF : ",dftest[0])
+        if  dftest[1] < 0.05:
+            print("2. P-Value : "+ str(dftest[1])+" OK")
+        else:
+            print("2. P-Value : ", dftest[1])
+        print("3. Num Of Lags : ", dftest[2])
+        print("4. Num Of Observations Used For ADF Regression:",      dftest[3])
+        print("5. Critical Values :")
+        for key, val in dftest[4].items():
+            print("\t",key, ": ", val)
+    
+    def auto_arima(self, dataset):
+        return auto_arima(self._df[dataset], trace=True, suppress_warnings=True)
 
-test["CPU Utilization"]
-test = test.cumsum()
-plt.show()
+    def split_data(self):
+        print(self._df.shape)
+        self._train=self._df.iloc[:-30]
+        self._test=self._df.iloc[-30:]
+        print(self._train.shape,self._test.shape)
 
+    def arima_model(self, dataset, order):
+        #warnings.filterwarnings('ignore', 'statsmodels.tsa.arima_model.ARMA', FutureWarning)
+        #warnings.filterwarnings('ignore', 'statsmodels.tsa.arima_model.ARIMA', FutureWarning)
+        self._model=ARIMA(self._train[dataset],order=order)
+        self._model=self._model.fit()
+        self._model.summary()
 
-'''
-test['CPU Utilization'].plot(legend=True)
+    def check_model(self, dataset):
+        self._start=len(self._train)
+        self._end=len(self._train)+len(self._test)-1
+        self._pred=self._model.predict(start=self._start,end=self._end,typ='levels').rename('ARIMA Predictions')
+        print(self._pred)
+        self._pred.plot(legend=True)
+        #self._test[dataset].plot(legend=True)
 
-plt.plot(test['CPU Utilization'])
-plt.show()
-'''
+        self._test.asfreq('min')
 
-test['CPU Utilization'].mean()
-print(test['CPU Utilization'].mean())
-rmse=sqrt(mean_squared_error(pred,test['CPU Utilization']))
-print("CPU Utilization Accuracy: "+str(rmse))
+        self._test[dataset].plot(figsize=(12,5))
 
+        self._test[dataset]
+        self._test = self._test.cumsum()
+        #plt.show()
 
-model2=ARIMA(df['CPU Utilization'],order=(2,1,2))
-model2=model2.fit()
-print(df.tail())
+    def check_accuracy(self, dataset):
+        self._test[dataset].mean()
+        self._rmse=sqrt(mean_squared_error(self._pred,self._test[dataset]))
+        return self._rmse
 
-pred=model2.predict(start=len(df), end=len(df)+30,typ='levels').rename('ARIMA Predictions')
-print(pred)
+if __name__ == '__main__':
 
-'''
-pred.index = pred.index.to_series().astype(str)
+    dataset = 'CPU Utilization'
 
-pred.plot(legend=True)
-pred['CPU Utilization'].plot(legend=True)
-plt.plot(pred['CPU Utilization'])
-plt.show()
-'''
-'''
-df["CPU Utilization"]
-df = df.cumsum()
-plt.show()
-'''
+    timeseries = Timeseries('data-set\\test.xlsx', 'data-set\\csvfile.csv')
+    timeseries.print_head()
+    #timeseries.plot_graph(dataset)
+    timeseries.stationary_test(dataset)
+    model = timeseries.auto_arima(dataset)
+    #ARIMA(2,0,2)(0,0,0)[0] intercept
+    order = model.get_params()['order']
+    timeseries.split_data()
+    timeseries.arima_model(dataset, order)
+    timeseries.check_model(dataset)
+    rmse = timeseries.check_accuracy(dataset)
+    print(rmse)

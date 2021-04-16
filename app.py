@@ -187,8 +187,10 @@ class App():
             #if not os.path.isfile('data-set\\'+instance.getInstanceId()+'.xlsx'):
             #    workbook = xlsxwriter.Workbook('data-set\\'+instance.getInstanceId()+'.xlsx')
                 worksheet = workbook.add_worksheet()
-    
-                worksheet.write('A1', 'Datetime')
+
+                format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+
+                worksheet.write('A1', 'Datetime', format)
                 worksheet.write('B1', 'CPU Utilization')
                 worksheet.write('C1', 'Network In')
                 worksheet.write('D1', 'Network Out')
@@ -248,8 +250,8 @@ class App():
                 
                 start_time = end_time - datetime.timedelta(seconds=120) #buscar dados dos ultimos 2 minutos
 
-                start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-                end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+                start_time = start_time.strftime('%m/%d/%Y %H:%M:%S')
+                end_time = end_time.strftime('%m/%d/%Y %H:%M:%S')
             
                 cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
                 networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
@@ -274,7 +276,7 @@ class App():
 
                 print("Instance "+str(count)+":  "+instance.getInstanceId())
                 print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
-                print("Launch Time: "+instance.getLaunchTime().strftime('%Y-%m-%dT%H:%M:%SZ'))
+                print("Launch Time: "+instance.getLaunchTime().strftime('%m/%d/%Y %H:%M:%S'))
         
                 try:
                     cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
@@ -312,6 +314,11 @@ class App():
                     packetOut = None
 
                 if instance.getLifecycleState() != "Terminated":
+                    #2021-04-15T11:12:53Z
+
+                    #date = end_time.replace("-","/")
+                    #date = date.replace("T"," ")
+                    #date = date.replace("Z","")
                     self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
                     print()
         

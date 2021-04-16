@@ -20,7 +20,7 @@ class Run:
     async def call_url(self, type):
         count = 0
         while True:
-            minutes = randint(1, 20)
+            minutes = randint(0, 20)
             sleep = (randint(1, 20) * 60)
             print("calls: "+str(minutes))
             print("sleep: "+str(sleep))
