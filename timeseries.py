@@ -30,7 +30,7 @@ class Timeseries():
         print(self._df.head())
 
     def plot_graph(self, dataset):
-        self._df.asfreq('min')
+        #self._df.asfreq('min')
 
         self._df[dataset].plot(figsize=(12,5))
         self._df[dataset]
@@ -79,13 +79,13 @@ class Timeseries():
         self._pred.plot(legend=True)
         #self._test[dataset].plot(legend=True)
 
-        self._test.asfreq('min')
+        #self._test.asfreq('min')
 
         self._test[dataset].plot(figsize=(12,5))
 
         self._test[dataset]
         self._test = self._test.cumsum()
-        #plt.show()
+        plt.show()
 
     def check_accuracy(self, dataset):
         self._test[dataset].mean()
@@ -96,9 +96,9 @@ if __name__ == '__main__':
 
     dataset = 'CPU Utilization'
 
-    timeseries = Timeseries('data-set\\test.xlsx', 'data-set\\csvfile.csv')
+    timeseries = Timeseries('data-set\\aaa test.xlsx', 'data-set\\csvfile.csv')
     timeseries.print_head()
-    #timeseries.plot_graph(dataset)
+    timeseries.plot_graph(dataset)
     timeseries.stationary_test(dataset)
     model = timeseries.auto_arima(dataset)
     #ARIMA(2,0,2)(0,0,0)[0] intercept
