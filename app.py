@@ -313,7 +313,7 @@ class App():
                 except:
                     packetOut = None
 
-                if instance.getLifecycleState() != "Terminated":
+                if (instance.getLifecycleState() != "Terminated" and instance.getLifecycleState() != "Shutting-Down") and instance.getHealthStatus() != "OutOfService":
                     #2021-04-15T11:12:53Z
 
                     #date = end_time.replace("-","/")

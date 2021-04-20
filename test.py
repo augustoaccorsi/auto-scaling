@@ -19,6 +19,9 @@ data_xls = pd.read_excel('data-set\\test.xlsx', 'Sheet1', dtype=str, index_col=N
 data_xls.to_csv('data-set\\csvfile.csv', encoding='utf-8', index=False) 
 df=pd.read_csv('data-set\\csvfile.csv', index_col='date',parse_dates=True)
 
+
+
+
 df=df.dropna()
 print('Shape of data',df.shape)
 print(df.head())
@@ -45,8 +48,9 @@ def adf_test(dataset):
 adf_test(df['cpu'])
 print()
 
+
 #Figure Out Order for ARIMA Model
-stepwise_fit = auto_arima(df['cpu'], suppress_warnings=True)           
+stepwise_fit = auto_arima(df['cpu'], trace=True, suppress_warnings=True)           
 print(stepwise_fit.summary())
 
 #Split Data into Training and Testing
@@ -58,7 +62,8 @@ print(test.iloc[0],test.iloc[-1])
 
 
 #Train the Model
-model=ARIMA(train['cpu'],order=(5,0,2))
+model=ARIMA(train['cpu'],order=(stepwise_fit.get_params()['order']))
+#model=ARIMA(train['cpu'],order=(5,0,2))['order']
 model=model.fit()
 print(model.summary())
 
@@ -67,14 +72,11 @@ start=len(train)
 end=len(train)+len(test)-1
 #if the predicted values dont have date values as index, you will have to uncomment the following two commented lines to plot a graph
 #index_future_dates=pd.date_range(start='2018-12-01',end='2018-12-30')
-pred=model.predict(start=start,end=end,typ='levels').rename('ARIMA predictions')
+pred=model.predict(start=start,end=end).rename('ARIMA predictions')
 #pred.index=index_future_dates
-pred.plot(legend=True)
-test['cpu'].plot(legend=True)
-plt.show()
 
 pred.plot(legend='ARIMA Predictions')
-test['cpu'].plot(legend=True)
+test.plot(legend='Test Predictions')
 plt.show()
 
 test['cpu'].mean()
@@ -82,17 +84,16 @@ test['cpu'].mean()
 rmse=sqrt(mean_squared_error(pred,test['cpu']))
 print(rmse)
 
-model2=ARIMA(df['cpu'],order=(5,0,2))
+model2=ARIMA(df['cpu'],order=(stepwise_fit.get_params()['order']))
+#model2=ARIMA(df['cpu'],order=(5,0,2))
 model2=model2.fit()
 print(df.tail())
 
 
 #For Future Dates
-index_future_dates=pd.date_range(start='2018-12-30',end='2019-01-29')
 #print(index_future_dates)
-pred=model2.predict(start=len(df),end=len(df)+30,typ='levels').rename('ARIMA Predictions')
+pred=model2.predict(start=len(df),end=len(df)+10).rename('ARIMA Predictions')
 #print(comp_pred)
-pred.index=index_future_dates
 print(pred)
 
 pred.plot(legend=True)

@@ -14,7 +14,7 @@ class Timeseries():
         self._data_xls = pd.read_excel(dataset_path, 'Sheet1', dtype=str, index_col=None)
         self._data_xls.to_csv(csv_path, encoding='utf-8', index=False)
 
-        self._df=pd.read_csv('data-set\\csvfile.csv',index_col='Datetime',parse_dates=True)
+        self._df=pd.read_csv('data-set\\csvfile.csv',index_col='date',parse_dates=True)
 
         self._train = None
         self._test = None
@@ -94,9 +94,9 @@ class Timeseries():
 
 if __name__ == '__main__':
 
-    dataset = 'CPU Utilization'
+    dataset = 'cpu'
 
-    timeseries = Timeseries('data-set\\aaa test.xlsx', 'data-set\\csvfile.csv')
+    timeseries = Timeseries('data-set\\test.xlsx', 'data-set\\csvfile.csv')
     timeseries.print_head()
     timeseries.plot_graph(dataset)
     timeseries.stationary_test(dataset)

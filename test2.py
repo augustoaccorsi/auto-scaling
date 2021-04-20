@@ -1,29 +1,46 @@
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-import seaborn as sns
-import matplotlib.pyplot as plt
-import xgboost as xgb
-from xgboost import plot_importance, plot_tree
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-plt.style.use('fivethirtyeight')
+# https://github.com/nachi-hebbar/ARIMA-Temperature_Forecasting/blob/master/Temperature_Forecast_ARIMA.ipynb
+# https://www.youtube.com/watch?v=8FCDpFhd1zk&t=158s
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import adfuller
+from pmdarima import auto_arima
+from statsmodels.tsa.arima_model import ARIMA
+from sklearn.metrics import mean_squared_error
+from math import sqrt
+
+# Ignore harmless warnings
+import warnings
+warnings.filterwarnings("ignore")
+
+#Read Data
 data_xls = pd.read_excel('data-set\\test.xlsx', 'Sheet1', dtype=str, index_col=None)
 data_xls.to_csv('data-set\\csvfile.csv', encoding='utf-8', index=False) 
-pjme=pd.read_csv('data-set\\csvfile.csv', index_col=[0],parse_dates=True)
+df=pd.read_csv('data-set\\csvfile.csv', index_col='date',parse_dates=True)
 
-color_pal = ["#F8766D", "#D39200", "#93AA00", "#00BA38", "#00C19F", "#00B9E3", "#619CFF", "#DB72FB"]
-_ = pjme.plot(figsize=(15,5), color=color_pal[0], title='CPU Utilization')
+df=df.dropna()
+print('Shape of data',df.shape)
+print(df.head())
+print()
 
+#Plot Your Data
+df['cpu'].plot(figsize=(12,5))
 plt.show()
 
-split_date = '01-Jan-2015'
-pjme_train = pjme.loc[pjme.index <= split_date].copy()
-pjme_test = pjme.loc[pjme.index > split_date].copy()
+#Check For Stationarity
+def adf_test(dataset):
+   dftest = adfuller(dataset, autolag = 'AIC')
+   print("1. ADF : ",dftest[0])
+   if  dftest[1] < 0.05:
+      print("2. P-Value : "+ str(dftest[1])+" OK")
+   else:
+      print("2. P-Value : ", dftest[1])
+   print("3. Num Of Lags : ", dftest[2])
+   print("4. Num Of Observations Used For ADF Regression and Critical Values Calculation :", dftest[3])
+   print("5. Critical Values :")
+   for key, val in dftest[4].items():
+      print("\t",key, ": ", val)
 
-_ = pjme_test \
-    .rename(columns={'PJME_MW': 'TEST SET'}) \
-    .join(pjme_train.rename(columns={'PJME_MW': 'TRAINING SET'}), how='outer') \
-    .plot(figsize=(15,5), title='PJM East')
-
-
-plt.show()
+adf_test(df['cpu'])
+print()
