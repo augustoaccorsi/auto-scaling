@@ -181,28 +181,32 @@ class App():
         self.create_files()
 
     def create_files(self):
-        for instance in self._instances:
-            if not os.path.isfile('data-set\\data.xlsx'):
-                workbook = xlsxwriter.Workbook('data-set\\data.xlsx')
-            #if not os.path.isfile('data-set\\'+instance.getInstanceId()+'.xlsx'):
-            #    workbook = xlsxwriter.Workbook('data-set\\'+instance.getInstanceId()+'.xlsx')
-                worksheet = workbook.add_worksheet()
+        if not os.path.isfile('data-set\\test\\cpu.xlsx'):
+            workbook = xlsxwriter.Workbook('data-set\\test\\cpu.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'date', format)
+            worksheet.write('B1', 'value')
+            workbook.close()
 
-                format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+        if not os.path.isfile('data-set\\test\\netin.xlsx'):
+            workbook = xlsxwriter.Workbook('data-set\\test\\netin.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'date', format)
+            worksheet.write('B1', 'value')
+            workbook.close()
 
-                worksheet.write('A1', 'Datetime', format)
-                worksheet.write('B1', 'CPU Utilization')
-                worksheet.write('C1', 'Network In')
-                worksheet.write('D1', 'Network Out')
-                worksheet.write('E1', 'Network Packets In')
-                worksheet.write('F1', 'Network Packets Out')
-                worksheet.write('G1', 'Instance')
-                worksheet.write('H1', 'Lifecycle State')
-            
-                workbook.close()
+        if not os.path.isfile('data-set\\test\\netout.xlsx'):
+            workbook = xlsxwriter.Workbook('data-set\\test\\netout.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'date', format)
+            worksheet.write('B1', 'value')
+            workbook.close()
 
-    def save_into_file(self, datetime, cpu, networkIn, networkOut, networkPacketsIn, networkPacketsOut, lifecycleState, instance):
-        workbook = load_workbook(filename = 'data-set\\data.xlsx')
+    def save_into_file(self, datetime, cpu, netin, netout, networkPacketsIn, networkPacketsOut, lifecycleState, instance):
+        workbook = load_workbook(filename = 'data-set\\test\\cpu.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
@@ -210,23 +214,62 @@ class App():
         worksheet.cell(column=1,row=newRowLocation, value=datetime)
         if cpu != None:
             worksheet.cell(column=2,row=newRowLocation, value=cpu)
-        if networkIn != None:
-            worksheet.cell(column=3,row=newRowLocation, value=networkIn)
-        if networkOut != None:
-            worksheet.cell(column=4,row=newRowLocation, value=networkOut)
-        if networkPacketsIn != None:
-            worksheet.cell(column=5,row=newRowLocation, value=networkPacketsIn)
-        if networkPacketsOut != None:
-            worksheet.cell(column=6,row=newRowLocation, value=networkPacketsOut)
-        
-        worksheet.cell(column=7,row=newRowLocation, value=instance)
-        if lifecycleState != None:
-            worksheet.cell(column=8,row=newRowLocation, value=lifecycleState)
 
-        workbook.save(filename = 'data-set\\data.xlsx')
+        workbook.save(filename = 'data-set\\test\\cpu.xlsx')
+        workbook.close()
+
+        workbook = load_workbook(filename = 'data-set\\test\\netin.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=datetime)
+        if netin != None:
+            worksheet.cell(column=2,row=newRowLocation, value=netin)
+
+        workbook.save(filename = 'data-set\\test\\netin.xlsx')
+        workbook.close()
+
+        workbook = load_workbook(filename = 'data-set\\test\\netout.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=datetime)
+        if netout != None:
+            worksheet.cell(column=2,row=newRowLocation, value=netout)
+
+        workbook.save(filename = 'data-set\\test\\netout.xlsx')
         workbook.close()
 
     def get_metric(self, metric, instance, start_time, end_time, statistics):
+        response =  self._cloud_watch.get_metric_data(
+            MetricDataQueries=[
+                {
+                    'Id': 'myrequest',
+                    'MetricStat': {
+                        'Metric': {
+                            'Namespace': 'AWS/EC2',
+                            'MetricName': metric,
+                            'Dimensions': [
+                                {
+                                    'Name': 'InstanceId',
+                                    'Value': instance
+                                }
+                            ]
+                        },
+                        'Period': 120,
+                        'Stat': statistics,
+                    }
+                },
+            ],
+            StartTime=start_time, 
+            EndTime=end_time
+        )
+
+        #print(response['MetricDataResults'][0]['Label'])
+        #print(response['MetricDataResults'][0]['Values'])
+
         return self._cloud_watch.get_metric_statistics(Namespace='AWS/EC2',
             MetricName=metric,
             Dimensions=[
@@ -273,7 +316,6 @@ class App():
                 except:
                     instance.setStatus("-")
 
-
                 print("Instance "+str(count)+":  "+instance.getInstanceId())
                 print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
                 print("Launch Time: "+instance.getLaunchTime().strftime('%m/%d/%Y %H:%M:%S'))
@@ -286,15 +328,15 @@ class App():
                     cpuUtilization = None
                 
                 try:
-                    netIn = str(networkIn['Datapoints'][0]['Maximum'])
-                    print("Network In: "+netIn+" bytes")
+                    netIn = str(float(networkIn['Datapoints'][0]['Maximum'])/1000) # valor em kB
+                    print("Network In: "+netIn+" Kb")
                     instance.setNetworkIn(netIn)
                 except:
                     netIn = None
                 
                 try:
-                    netOut = str(networkOut['Datapoints'][0]['Maximum'])
-                    print("Network Out: "+netOut+" bytes")
+                    netOut = str(float(networkOut['Datapoints'][0]['Maximum'])/1000) # valor em kB
+                    print("Network Out: "+netOut+" Kb")
                     instance.setNetworkOut(netOut)
                 except:
                     netOut = None
@@ -328,12 +370,13 @@ class App():
         self.describe()
 
     def scale_up(self):
-        response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
-        print(response)
+        self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + 1))
+        print("Autoscaling Group scalled up, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() + 1)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() + 1))
     
     def scale_down(self):
-        response = self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - 1))
-        print(response)
+        self._asg.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - 1))
+        print("Autoscaling Group scalled down, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() - 1)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() - 1))
+
 
 if __name__ == '__main__':
     app = App("engine-asg", "sa-east-1")
@@ -344,9 +387,7 @@ if __name__ == '__main__':
         if sys.argv[1] == "down":
             app.scale_down()
     except:
-        print(app)
-        app.commit_suicide()
-        print(app)
+        app.read_instances()
         
 
 
