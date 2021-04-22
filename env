@@ -1,5 +1,0 @@
-auto-scaling-group=web-app-asg
-region=sa-east-1
-
-
-aws cloudwatch get-metric-statistics --metric-name CPUUtilization --start-time 2021-03-29T00:20:00Z --end-time 2021-03-29T00:25:00Z --period 300 --namespace AWS/EC2 --statistics Maximum --dimensions Name=InstanceId,Value=i-0d0742ad676ee9a46
