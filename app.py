@@ -243,33 +243,6 @@ class App():
         workbook.close()
 
     def get_metric(self, metric, instance, start_time, end_time, statistics):
-        response =  self._cloud_watch.get_metric_data(
-            MetricDataQueries=[
-                {
-                    'Id': 'myrequest',
-                    'MetricStat': {
-                        'Metric': {
-                            'Namespace': 'AWS/EC2',
-                            'MetricName': metric,
-                            'Dimensions': [
-                                {
-                                    'Name': 'InstanceId',
-                                    'Value': instance
-                                }
-                            ]
-                        },
-                        'Period': 120,
-                        'Stat': statistics,
-                    }
-                },
-            ],
-            StartTime=start_time, 
-            EndTime=end_time
-        )
-
-        #print(response['MetricDataResults'][0]['Label'])
-        #print(response['MetricDataResults'][0]['Values'])
-
         return self._cloud_watch.get_metric_statistics(Namespace='AWS/EC2',
             MetricName=metric,
             Dimensions=[
@@ -299,14 +272,9 @@ class App():
                 cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
                 networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
                 networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Maximum")
-                #cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
-                #networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
-                #networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Maximum")
                 networkPacketsIn =  self.get_metric("NetworkPacketsIn", instance.getInstanceId(), start_time, end_time, "Average")
                 networkPacketsOut =  self.get_metric("NetworkPacketsOut", instance.getInstanceId(), start_time, end_time, "Average")
-        
-                date_hour = end_time.split("T")
-                
+                        
                 state = self._ec2.describe_instances(InstanceIds=[instance.getInstanceId()])
                 instance.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
                 instance.setLaunchTime(state['Reservations'][0]['Instances'][0]['LaunchTime'])
@@ -356,13 +324,8 @@ class App():
                     packetOut = None
 
                 if (instance.getLifecycleState() != "Terminated" and instance.getLifecycleState() != "Shutting-Down") and instance.getHealthStatus() != "OutOfService":
-                    #2021-04-15T11:12:53Z
-
-                    #date = end_time.replace("-","/")
-                    #date = date.replace("T"," ")
-                    #date = date.replace("Z","")
                     self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
-                    print()
+                print()
         
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
         autoscaling.process()
@@ -388,8 +351,3 @@ if __name__ == '__main__':
             app.scale_down()
     except:
         app.read_instances()
-        
-
-
-        #app.create_files()
-        #app.read_instances()

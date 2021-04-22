@@ -1,5 +1,3 @@
-import datetime
-from datetime import timedelta
 from autoscalinggroup import Instance
 
 class Autoscaling:
@@ -10,7 +8,6 @@ class Autoscaling:
         self._terminated = [] 
 
         self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE = 3
-        #self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE = 999
         
     def clearTriggerUp(self):
         for instance in self._instances:
@@ -54,16 +51,9 @@ class Autoscaling:
 
         return False
 
-    def proactive_scale(self, instance):
+    def proactive_scale(self):
         return False
     
-    def migration(self, instancesDown, instancesUp): # utilizar networking como workload 
-        if instancesDown == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE and instancesUp == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE:
-            self.clearTriggerDown()
-            self.clearTriggerUp()
-            print("TODO MIGRAÇÃO")
-        return False
-
     def process(self):
 
         reactive = False
@@ -72,7 +62,7 @@ class Autoscaling:
         for instance in self._instances:
             if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and instance.getStatus() == "Passed":
               reactive = self.reactive_scale(instance)
-              proactive = self.proactive_scale(instance)
+              proactive = self.proactive_scale()
         instancesDown = 0
         instancesUp = 0
 
@@ -87,19 +77,16 @@ class Autoscaling:
                 if instance.getTriggerUp() == self._NUMBER_OF_CHECKS_TO_REATIVE_SCALE:
                     instancesUp +=1
 
-        if self.migration(instancesDown, instancesUp) == False:
-            if instancesDown > 0:
-                if instancesDown == len(self._instances):
-                    result = self.scale_down(len(self._instances) - 1)
-                else:
-                    result = self.scale_down(instancesDown)
+        if instancesDown > 0:
+            if instancesDown == len(self._instances):
+                result = self.scale_down(len(self._instances) - 1)
+            else:
+                result = self.scale_down(instancesDown)
 
-            if instancesUp > 0:
-                if instancesUp == 1:
-                    result = self.scale_up(1)
-                else:
-                    result = self.scale_up(instancesUp)
+        if instancesUp > 0:
+            if instancesUp == 1:
+                result = self.scale_up(1)
+            else:
+                result = self.scale_up(instancesUp)
 
         return result
-        
-
