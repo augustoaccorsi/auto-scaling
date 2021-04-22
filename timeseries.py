@@ -113,6 +113,13 @@ class Timeseries:
         plt.legend(["test", "prediction"])
         plt.show()
 
+    def execute(self):
+        self.get_arima_order(False)
+        self.fit_model()
+        self.predict()
+
+        return self._accuracy
+
 if __name__ == '__main__':
     try:
         timeseries = Timeseries(sys.argv[1])
