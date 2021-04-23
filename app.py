@@ -181,24 +181,24 @@ class App():
         self.create_files()
 
     def create_files(self):
-        if not os.path.isfile('data-set\\cpu.xlsx'):
-            workbook = xlsxwriter.Workbook('data-set\\cpu.xlsx')
+        if not os.path.isfile('dataset\\cpu.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\cpu.xlsx')
             worksheet = workbook.add_worksheet()
             format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
             worksheet.write('A1', 'date', format)
             worksheet.write('B1', 'value')
             workbook.close()
 
-        if not os.path.isfile('data-set\\netin.xlsx'):
-            workbook = xlsxwriter.Workbook('data-set\\netin.xlsx')
+        if not os.path.isfile('dataset\\netin.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\netin.xlsx')
             worksheet = workbook.add_worksheet()
             format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
             worksheet.write('A1', 'date', format)
             worksheet.write('B1', 'value')
             workbook.close()
 
-        if not os.path.isfile('data-set\\netout.xlsx'):
-            workbook = xlsxwriter.Workbook('data-set\\netout.xlsx')
+        if not os.path.isfile('dataset\\netout.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\netout.xlsx')
             worksheet = workbook.add_worksheet()
             format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
             worksheet.write('A1', 'date', format)
@@ -206,7 +206,7 @@ class App():
             workbook.close()
 
     def save_into_file(self, datetime, cpu, netin, netout, networkPacketsIn, networkPacketsOut, lifecycleState, instance):
-        workbook = load_workbook(filename = 'data-set\\cpu.xlsx')
+        workbook = load_workbook(filename = 'dataset\\cpu.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
@@ -215,10 +215,10 @@ class App():
         if cpu != None:
             worksheet.cell(column=2,row=newRowLocation, value=cpu)
 
-        workbook.save(filename = 'data-set\\cpu.xlsx')
+        workbook.save(filename = 'dataset\\cpu.xlsx')
         workbook.close()
 
-        workbook = load_workbook(filename = 'data-set\\netin.xlsx')
+        workbook = load_workbook(filename = 'dataset\\netin.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
@@ -227,10 +227,10 @@ class App():
         if netin != None:
             worksheet.cell(column=2,row=newRowLocation, value=netin)
 
-        workbook.save(filename = 'data-set\\netin.xlsx')
+        workbook.save(filename = 'dataset\\netin.xlsx')
         workbook.close()
 
-        workbook = load_workbook(filename = 'data-set\\netout.xlsx')
+        workbook = load_workbook(filename = 'dataset\\netout.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
@@ -239,7 +239,7 @@ class App():
         if netout != None:
             worksheet.cell(column=2,row=newRowLocation, value=netout)
 
-        workbook.save(filename = 'data-set\\netout.xlsx')
+        workbook.save(filename = 'dataset\\netout.xlsx')
         workbook.close()
 
     def get_metric(self, metric, instance, start_time, end_time, statistics):
