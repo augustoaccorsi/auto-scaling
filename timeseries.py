@@ -12,9 +12,9 @@ warnings.filterwarnings("ignore")
 class Timeseries:
 
     def __init__(self, path):
-        data_xls = pd.read_excel('data-set\\'+path+'.xlsx', 'Sheet1', dtype=str, index_col=None)
-        data_xls.to_csv('data-set\\'+path+'.csv', encoding='utf-8', index=False) 
-        self._df=pd.read_csv('data-set\\'+path+'.csv', index_col='date',parse_dates=True)
+        data_xls = pd.read_excel('dataset\\'+path+'.xlsx', 'Sheet1', dtype=str, index_col=None)
+        data_xls.to_csv('dataset\\'+path+'.csv', encoding='utf-8', index=False) 
+        self._df=pd.read_csv('dataset\\'+path+'.csv', index_col='date',parse_dates=True)
         self._arima = None
         self._model = None
         self._model_fit = None
@@ -132,14 +132,15 @@ class Timeseries:
 
     def execute(self, output, next):
         print("Start Forecasting of "+self._path)
-        self.get_arima_order(False)
-        self.fit_model()
-        self.predict().forecast(next)
-        if output == True:
-            self.print_data()
+        try:
+            self.get_arima_order(False)
+            self.fit_model()
+            self.predict().forecast(next)
+            if output == True:
+                self.print_data()
+        except:
+            print("Lack data in dataset, please wait for more analysis")
         print("End Forecasting of "+self._path)
-
-        return self
 
 if __name__ == '__main__':
     try:
