@@ -54,10 +54,13 @@ class Autoscaling:
         cpu_ts = Timeseries('cpu')
         netin_ts = Timeseries('netin')
         netout_ts = Timeseries('netout')
-
-        cpu = cpu_ts.execute(True, 3).print_data()
-        netin = netin_ts.execute(True, 3).print_data()
-        netout = netout_ts.execute(True, 3).print_data()
+    
+        cpu = cpu_ts.execute(True, 3)
+        print()
+        netin = netin_ts.execute(True, 3)
+        print()
+        netout = netout_ts.execute(True, 3)
+        print()
         
         return False
     
