@@ -1,1 +1,1 @@
-# auto-scaling
+# autoscaling
