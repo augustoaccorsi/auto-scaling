@@ -51,12 +51,13 @@ class Autoscaling:
         return False
 
     def proactive_scale(self):
-        #cpu_ts = Timeseries('cpu')
-        #netin_ts = Timeseries('netin')
-        #netout_ts = Timeseries('netout')
+        cpu_ts = Timeseries('cpu')
+        netin_ts = Timeseries('netin')
+        netout_ts = Timeseries('netout')
 
-        #netin = netin_ts.execute(True)
-        #netout = netout_ts.execute(True)
+        cpu = cpu_ts.execute(True, 3).print_data()
+        netin = netin_ts.execute(True, 3).print_data()
+        netout = netout_ts.execute(True, 3).print_data()
         
         return False
     

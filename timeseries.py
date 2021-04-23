@@ -128,7 +128,7 @@ class Timeseries:
 
     def print_data(self):
         print("Accuracy: "+str(self._accuracy))
-        print("Forecast Values: "+str(self._forecast[:5]))
+        print("Forecast Values: "+str(self._forecast))
 
     def execute(self, output, next):
         print("Start Forecasting of "+self._path)
@@ -139,7 +139,7 @@ class Timeseries:
             self.print_data()
         print("End Forecasting of "+self._path)
 
-        return self._accuracy
+        return self
 
 if __name__ == '__main__':
     try:
@@ -156,4 +156,4 @@ if __name__ == '__main__':
     #timeseries.plot_predicition()
 
     print("Accuracy: "+str(timeseries._accuracy))
-    print("Forcast Values: "+str(timeseries._forecast[:10]))
+    print("Forcast Values: "+str(timeseries._forecast))
