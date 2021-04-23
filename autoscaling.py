@@ -1,4 +1,5 @@
 from autoscalinggroup import Instance
+from timeseries import Timeseries
 
 class Autoscaling:
     def __init__(self, instances, autoScalingGroup, autoScalingClient):
@@ -47,11 +48,16 @@ class Autoscaling:
         else:
             self.clearTriggerDown()
             self.clearTriggerUp()
-
-
         return False
 
     def proactive_scale(self):
+        #cpu_ts = Timeseries('cpu')
+        #netin_ts = Timeseries('netin')
+        #netout_ts = Timeseries('netout')
+
+        #netin = netin_ts.execute(True)
+        #netout = netout_ts.execute(True)
+        
         return False
     
     def process(self):
@@ -62,11 +68,10 @@ class Autoscaling:
         for instance in self._instances:
             if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and instance.getStatus() == "Passed":
               reactive = self.reactive_scale(instance)
-              proactive = self.proactive_scale()
         instancesDown = 0
         instancesUp = 0
 
-        if proactive == True:
+        if self.proactive_scale() == True:
             print("TODO PROACTIVE")
 
 
