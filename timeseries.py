@@ -15,6 +15,9 @@ class Timeseries:
         data_xls = pd.read_excel('dataset\\'+path+'.xlsx', 'Sheet1', dtype=str, index_col=None)
         data_xls.to_csv('dataset\\'+path+'.csv', encoding='utf-8', index=False) 
         self._df=pd.read_csv('dataset\\'+path+'.csv', index_col='date',parse_dates=True)
+        
+        self._df=self._df.dropna()
+        
         self._arima = None
         self._model = None
         self._model_fit = None
