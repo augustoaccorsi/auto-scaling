@@ -158,6 +158,4 @@ if __name__ == '__main__':
     #timeseries.plot_residual_errors()
     timeseries.predict().forecast(3)
     #timeseries.plot_predicition()
-
-    print("Accuracy: "+str(timeseries._accuracy))
-    print("Forcast Values: "+str(timeseries._forecast))
+    timeseries.print_data()
