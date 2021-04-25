@@ -128,6 +128,7 @@ class Timeseries:
     def print_data(self):
         print("Accuracy: "+str(self._accuracy))
         print("Forecast Values: "+str(self._forecast))
+        print("ARIMA: "+str(self._arima.get_params()['order']))
 
     def execute(self, output, next):
         print("Start Forecasting of "+self._path)

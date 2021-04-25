@@ -11,7 +11,7 @@ class Run:
 
     def __init__(self):        
         self._urlPost = "http://augusto-accorsi-engine-elb-1884692720.sa-east-1.elb.amazonaws.com:5000/engine/mand?max_iter=950&width=950&height=950"
-        self._urlGet = "http://localhost:5000"
+        self._urlGet = "http://augusto-accorsi-engine-elb-1884692720.sa-east-1.elb.amazonaws.com:5000"
 
     def call_request_get(self, count):
         res = requests.get(self._urlGet) 
