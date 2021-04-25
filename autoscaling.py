@@ -54,6 +54,8 @@ class Autoscaling:
         cpu_ts = Timeseries('cpu')
         netin_ts = Timeseries('netin')
         netout_ts = Timeseries('netout')
+        #packetin_ts = Timeseries('packetin')
+        #packetout_ts = Timeseries('packetout')
     
         cpu = cpu_ts.execute(True, 5)
         print()
@@ -61,6 +63,10 @@ class Autoscaling:
         print()
         netout = netout_ts.execute(True, 5)
         print()
+        #packetin = packetin_ts.execute(True, 5)
+        #print()
+        #packetout = packetout_ts.execute(True, 5)
+        #print()
         
         return False
     

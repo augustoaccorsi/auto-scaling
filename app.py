@@ -205,7 +205,23 @@ class App():
             worksheet.write('B1', 'value')
             workbook.close()
 
-    def save_into_file(self, datetime, cpu, netin, netout, networkPacketsIn, networkPacketsOut, lifecycleState, instance):
+        if not os.path.isfile('dataset\\packetin.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\packetin.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'date', format)
+            worksheet.write('B1', 'value')
+            workbook.close()
+
+        if not os.path.isfile('dataset\\packetout.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\packetout.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'date', format)
+            worksheet.write('B1', 'value')
+            workbook.close()
+
+    def save_into_file(self, datetime, cpu, netin, netout, packetin, packetout, lifecycleState, instance):
         workbook = load_workbook(filename = 'dataset\\cpu.xlsx')
         worksheet = workbook['Sheet1']
         
@@ -240,6 +256,30 @@ class App():
             worksheet.cell(column=2,row=newRowLocation, value=netout)
 
         workbook.save(filename = 'dataset\\netout.xlsx')
+        workbook.close()
+
+        workbook = load_workbook(filename = 'dataset\\packetin.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=datetime)
+        if packetin != None:
+            worksheet.cell(column=2,row=newRowLocation, value=packetin)
+
+        workbook.save(filename = 'dataset\\packetin.xlsx')
+        workbook.close()
+
+        workbook = load_workbook(filename = 'dataset\\packetout.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=datetime)
+        if packetout != None:
+            worksheet.cell(column=2,row=newRowLocation, value=packetout)
+
+        workbook.save(filename = 'dataset\\packetout.xlsx')
         workbook.close()
 
     def get_metric(self, metric, instance, start_time, end_time, statistics):
@@ -310,21 +350,21 @@ class App():
                     netOut = None
                 
                 try:
-                    packetIn = str(networkPacketsIn['Datapoints'][0]['Average'])
-                    print("Network Packages In: "+packetIn)
-                    instance.setNetworkPacketsIn(packetIn)
+                    packetin = str(networkPacketsIn['Datapoints'][0]['Average'])
+                    print("Network Packages In: "+packetin)
+                    instance.setNetworkPacketsIn(packetin)
                 except:
-                    packetIn = None
+                    packetin = None
                 
                 try:
-                    packetOut = str(networkPacketsOut['Datapoints'][0]['Average'])
-                    print("Network Packages Out: "+packetOut)
-                    instance.setNetworkPacketsOut(packetOut)
+                    packetout = str(networkPacketsOut['Datapoints'][0]['Average'])
+                    print("Network Packages Out: "+packetout)
+                    instance.setNetworkPacketsOut(packetout)
                 except:
-                    packetOut = None
+                    packetout = None
 
                 if (instance.getLifecycleState() != "Terminated" and instance.getLifecycleState() != "Shutting-Down") and instance.getHealthStatus() != "OutOfService":
-                    self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetIn, packetOut, instance.getLifecycleState(), instance.getInstanceId())
+                    self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetin, packetout, instance.getLifecycleState(), instance.getInstanceId())
                 print()
         
         autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)

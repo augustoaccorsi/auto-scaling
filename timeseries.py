@@ -1,5 +1,6 @@
 from datetime import time
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from pandas.plotting import autocorrelation_plot
 from statsmodels.tsa.stattools import adfuller
@@ -7,6 +8,7 @@ from pmdarima import auto_arima
 from statsmodels.tsa.arima_model import ARIMA
 from sklearn.metrics import mean_squared_error
 import warnings, math, sys
+from statsmodels.tsa.stattools import acf
 warnings.filterwarnings("ignore")   
 
 class Timeseries:
@@ -30,6 +32,16 @@ class Timeseries:
         self._forecast = []
         self._path = path
         self._model_fit = None
+
+        self._mape = 0
+        self._me = 0
+        self._mae = 0
+        self._mpe = 0
+        self._rmse = 0
+        self._acf1 = 0
+        self._corr = 0
+        self._minmax = 0
+
 
     def plot(self):
         self._df.plot(figsize=(12,5))
@@ -107,11 +119,26 @@ class Timeseries:
                 obs = self._test[t]
                 self._history.append(obs)
 
-        self._error = mean_squared_error(self._test, self._predictions)
-        self._accuracy = (100 - math.sqrt(self._error)) 
+        self.forecast_accuracy(self._predictions, self._test)
 
         return self
-    
+
+    def forecast_accuracy(self, forecast, actual):
+        self._mape = np.mean(np.abs(forecast - actual)/np.abs(actual))  # MAPE
+        self._me = np.mean(forecast - actual)             # ME
+        self._mae = np.mean(np.abs(forecast - actual))    # MAE
+        self._mpe = np.mean((forecast - actual)/actual)   # MPE
+        self._rmse = np.mean((forecast - actual)**2)**.5  # RMSE
+        self._corr = np.corrcoef(forecast, actual)[0,1]   # corr
+        mins = np.amin(np.hstack([forecast, 
+                                actual]), axis=1)
+        maxs = np.amax(np.hstack([forecast, 
+                                actual]), axis=1)
+        self._minmax = 1 - np.mean(mins/maxs)             # minmax
+        self._acf1 = acf(forecast-actual)[1]              # ACF1
+
+        self._accuracy = 100 - self._mape
+            
     def forecast(self, next):
         pred = self._model_fit.forecast(steps=next)
 
