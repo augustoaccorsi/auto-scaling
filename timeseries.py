@@ -57,15 +57,13 @@ class Timeseries:
         self._arima = auto_arima(self._df, trace=trace, seasonal=True, suppress_warnings=True) 
     
     def fit_model(self):
-        '''
         try:
             self._model = ARIMA(self._df, order=self._arima.get_params()['order'])
             #self._model = ARIMA(self._df, order=(5,1,0))
             self._model_fit = self._model.fit(disp=0)
         except:
-        '''
-        self._model = ARIMA(self._df, order=(5,1,0))
-        self._model_fit = self._model.fit(disp=0)
+            self._model = ARIMA(self._df, order=(5,1,0))
+            self._model_fit = self._model.fit(disp=0)
         
         return self._model_fit.summary()
     
@@ -87,11 +85,10 @@ class Timeseries:
         self._train, self._test = X[0:size], X[size : len(X)]
         self._history = [x for x in self._train]
         
-        '''
         try:
             for t in range(len(self._test)):
-                #self.model = ARIMA(self._history, order=self._arima.get_params()['order'])
-                self.model = ARIMA(self._history, order=(5, 1, 0))
+                self.model = ARIMA(self._history, order=self._arima.get_params()['order'])
+                #self.model = ARIMA(self._history, order=(5, 1, 0))
                 self._model_fit = self.model.fit(disp=0)
                 output = self._model_fit.forecast()
                 yhat = output[0]
@@ -99,17 +96,16 @@ class Timeseries:
                 obs = self._test[t]
                 self._history.append(obs)
         except:
-        '''
-        self._predictions = list()
-        self._history = [x for x in self._train]
-        for t in range(len(self._test)):
-            self.model = ARIMA(self._history, order=(5, 1, 0))
-            self._model_fit = self.model.fit(disp=0)
-            output = self._model_fit.forecast()
-            yhat = output[0]
-            self._predictions.append(yhat)
-            obs = self._test[t]
-            self._history.append(obs)
+            self._predictions = list()
+            self._history = [x for x in self._train]
+            for t in range(len(self._test)):
+                self.model = ARIMA(self._history, order=(5, 1, 0))
+                self._model_fit = self.model.fit(disp=0)
+                output = self._model_fit.forecast()
+                yhat = output[0]
+                self._predictions.append(yhat)
+                obs = self._test[t]
+                self._history.append(obs)
 
         self._error = mean_squared_error(self._test, self._predictions)
         self._accuracy = (100 - math.sqrt(self._error)) 
