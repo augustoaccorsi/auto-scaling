@@ -1,5 +1,6 @@
 from autoscalinggroup import Instance
 from timeseries import Timeseries
+import threading
 
 class Autoscaling:
     def __init__(self, instances, autoScalingGroup, autoScalingClient):
@@ -50,23 +51,26 @@ class Autoscaling:
             self.clearTriggerUp()
         return False
 
+    def arima_call(self, dataset, output, next_forecast):
+        timeseries = Timeseries(dataset)
+        timeseries.execute(output, next_forecast)
+        print()
+
     def proactive_scale(self):
-        cpu_ts = Timeseries('cpu')
-        netin_ts = Timeseries('netin')
-        netout_ts = Timeseries('netout')
-        #packetin_ts = Timeseries('packetin')
-        #packetout_ts = Timeseries('packetout')
+        # creating thread
+        t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 10))
+        t2 = threading.Thread(target=self.arima_call, args=('netin', True, 10))
+        t3 = threading.Thread(target=self.arima_call, args=('netout', True, 10))
     
-        cpu = cpu_ts.execute(True, 5)
-        print()
-        netin = netin_ts.execute(True, 5)
-        print()
-        netout = netout_ts.execute(True, 5)
-        print()
-        #packetin = packetin_ts.execute(True, 5)
-        #print()
-        #packetout = packetout_ts.execute(True, 5)
-        #print()
+        # starting thread
+        t1.start()
+        t2.start()
+        t3.start()
+    
+        # wait until thread is completely executed
+        t1.join()
+        t2.join()
+        t3.join()
         
         return False
     
