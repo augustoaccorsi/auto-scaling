@@ -158,7 +158,6 @@ class Timeseries:
         print("ARIMA: "+str(self._arima.get_params()['order']))
 
     def execute(self, output, next):
-        print("Start Forecasting of "+self._path)
         try:
             self.get_arima_order(False)
             self.fit_model()

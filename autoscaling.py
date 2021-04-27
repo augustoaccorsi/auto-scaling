@@ -58,6 +58,7 @@ class Autoscaling:
 
     def proactive_scale(self):
         # creating thread
+        print("Start Forecasting")
         t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 10))
         t2 = threading.Thread(target=self.arima_call, args=('netin', True, 10))
         t3 = threading.Thread(target=self.arima_call, args=('netout', True, 10))
@@ -70,8 +71,7 @@ class Autoscaling:
         # wait until thread is completely executed
         t1.join()
         t2.join()
-        t3.join()
-        
+        t3.join()        
         
         return False
     
