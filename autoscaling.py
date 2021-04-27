@@ -72,6 +72,7 @@ class Autoscaling:
         t2.join()
         t3.join()
         
+        
         return False
     
     def process(self):
