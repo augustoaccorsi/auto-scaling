@@ -42,7 +42,6 @@ class Timeseries:
         self._corr = 0
         self._minmax = 0
 
-
     def plot(self):
         self._df.plot(figsize=(12,5))
         plt.show()
@@ -153,6 +152,7 @@ class Timeseries:
         plt.show()
 
     def print_data(self):
+        print("Dataset: "+self._path)
         print("Accuracy: "+str(self._accuracy))
         print("Forecast Values: "+str(self._forecast))
         print("ARIMA: "+str(self._arima.get_params()['order']))
@@ -165,8 +165,7 @@ class Timeseries:
             if output == True:
                 self.print_data()
         except:
-            print("Lack data in dataset, please wait for more analysis")
-        print("End Forecasting of "+self._path)
+            print("Lack data in dataset "+self._path+", please wait for more analysis")
 
 if __name__ == '__main__':
     try:

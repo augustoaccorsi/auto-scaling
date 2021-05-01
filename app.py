@@ -32,6 +32,9 @@ class App():
         self._auto_scaling_group = AutoScalingGroup()
         self._instances = []
         self._instances_ids = dict()
+        
+        self._cooldown = False
+        self._cooldown_trigger = 0
 
         self.describe()
         
@@ -220,6 +223,23 @@ class App():
             worksheet.write('A1', 'date', format)
             worksheet.write('B1', 'value')
             workbook.close()
+        
+        if not os.path.isfile('dataset\\all.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\all.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'date', format)
+            worksheet.write('B1', 'cpu')
+            worksheet.write('C1', 'netin')
+            worksheet.write('D1', 'netout')
+            worksheet.write('E1', 'packin')
+            worksheet.write('F1', 'packout')
+            worksheet.write('G1', 'instance')
+            worksheet.write('H1', 'status')
+            worksheet.write('I1', 'cpu_acc')
+            worksheet.write('J1', 'netin_acc')
+            worksheet.write('K1', 'netout_acc')
+            workbook.close()
 
     def save_into_file(self, datetime, cpu, netin, netout, packetin, packetout, lifecycleState, instance):
         workbook = load_workbook(filename = 'dataset\\cpu.xlsx')
@@ -280,6 +300,28 @@ class App():
             worksheet.cell(column=2,row=newRowLocation, value=packetout)
 
         workbook.save(filename = 'dataset\\packetout.xlsx')
+        workbook.close()
+
+        workbook = load_workbook(filename = 'dataset\\all.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=datetime)
+        if cpu != None:
+            worksheet.cell(column=2,row=newRowLocation, value=cpu)
+        if netin != None:
+            worksheet.cell(column=3,row=newRowLocation, value=netin)
+        if netout != None:
+            worksheet.cell(column=4,row=newRowLocation, value=netout)
+        if packetin != None:
+            worksheet.cell(column=5,row=newRowLocation, value=packetin)
+        if packetout != None:
+            worksheet.cell(column=6,row=newRowLocation, value=packetout)
+        worksheet.cell(column=7,row=newRowLocation, value=instance)
+        worksheet.cell(column=8,row=newRowLocation, value=lifecycleState)
+
+        workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
 
     def get_metric(self, metric, instance, start_time, end_time, statistics):
@@ -363,13 +405,20 @@ class App():
                 except:
                     packetout = None
 
-                if (instance.getLifecycleState() != "Terminated" and instance.getLifecycleState() != "Shutting-Down") and instance.getHealthStatus() != "OutOfService":
+                if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService":
                     self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetin, packetout, instance.getLifecycleState(), instance.getInstanceId())
                 print()
         
-        autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
-        autoscaling.process()
-        
+        if self._cooldown == False:
+            autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
+            autoscaling.process()
+            self._cooldown = autoscaling._cooldown
+        else:
+            self._cooldown_trigger +=1
+            print("Cooldown process "+str(self._cooldown_trigger))
+            if self._cooldown_trigger == 5:
+                self._cooldown = False
+                self._cooldown_trigger = 0
         self.describe()
 
     def scale_up(self):

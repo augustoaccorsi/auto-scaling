@@ -10,32 +10,43 @@ from requests.packages.urllib3.util.retry import Retry
 class Run:
 
     def __init__(self):        
-        self._urlPost = "http://augusto-accorsi-engine-elb-1884692720.sa-east-1.elb.amazonaws.com:5000/engine/mand?max_iter=950&width=950&height=950"
-        self._urlGet = "http://augusto-accorsi-engine-elb-1884692720.sa-east-1.elb.amazonaws.com:5000"
+        self._url = "http://augusto-accorsi-engine-elb-1884692720.sa-east-1.elb.amazonaws.com:5000/"
+        self._path = "engine/mand?max_iter=&1&width=&2&height=&3"
 
     def call_request_get(self, count):
-        res = requests.get(self._urlGet) 
-        print("Call " + str(count+1) + " on "+self._urlGet+" : " + str(res.status_code))
+        session = requests.Session()
+        session.trust_env = False
+        res = session.get(self._url) 
+        print("Call " + str(count+1) + " on "+self._url+" : " + str(res.status_code))
         return res.status_code
 
-    def call_request_post(self, count):
-        res = requests.post(self._urlPost) 
-        print("Call " + str(count+1) + " on "+self._urlPost.replace("http://augusto-accorsi-engine-elb-1884692720.sa-east-1.elb.amazonaws.com:5000","")+" on "+str(datetime.datetime.now())+" : "+ str(res.status_code))
+    def call_request_post(self, count, x, y, z):
+        session = requests.Session()
+        session.trust_env = False
+        path = self._path
+        path = path.replace("&1", x)
+        path = path.replace("&2", y)
+        path = path.replace("&3", z)
+        res = session.post(self._url+path) 
+        print("Call " + str(count+1) + " on "+path+" on "+str(datetime.datetime.now())+" : "+ str(res.status_code))
         return res.status_code
         
     async def call_url(self, type):
         #await asyncio.sleep(600)
         count = 0
         while True:
-            minutes = randint(0, 20)
+            minutes = 20#randint(5, 20)
             sleep = (randint(10, 20) * 60)
             print("calls: "+str(minutes))
             print("sleep: "+str(sleep/60))
             exit_code = 0
             finish_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
             while datetime.datetime.now() < finish_time:
+                x = str(950)#str(randint(700, 1000))
+                y = str(950)#str(randint(700, 1000))
+                z = str(950)#str(randint(700, 1000))
                 if type == "post":
-                    status_code = self.call_request_post(count)   
+                    status_code = self.call_request_post(count, x, y, z)   
                 if type == "get":
                     status_code = self.call_request_get(count)
                 if status_code != 201:
@@ -61,7 +72,7 @@ if __name__ == '__main__':
         except:
             for i in range(int(sys.argv[1])):
                 if sys.argv[2] == "post":
-                    run.call_request_post(i)
+                    run.call_request_post(i, 950, 950, 950)
                 else:
                     run.call_request_get(i)
             pass

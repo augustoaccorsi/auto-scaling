@@ -47,7 +47,7 @@ class Run:
                 try:
                     await asyncio.sleep(int(sys.argv[1]))
                 except:
-                    await asyncio.sleep(120)
+                    await asyncio.sleep(60)
 
 if __name__ == '__main__':
     run = Run()
