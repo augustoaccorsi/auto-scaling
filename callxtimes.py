@@ -35,16 +35,16 @@ class Run:
         #await asyncio.sleep(600)
         count = 0
         while True:
-            minutes = 20#randint(5, 20)
+            minutes = randint(5, 20)
             sleep = (randint(10, 20) * 60)
             print("calls: "+str(minutes))
             print("sleep: "+str(sleep/60))
             exit_code = 0
             finish_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
             while datetime.datetime.now() < finish_time:
-                x = str(950)#str(randint(700, 1000))
-                y = str(950)#str(randint(700, 1000))
-                z = str(950)#str(randint(700, 1000))
+                x = str(randint(700, 1000))
+                y = str(randint(700, 1000))
+                z = str(randint(700, 1000))
                 if type == "post":
                     status_code = self.call_request_post(count, x, y, z)   
                 if type == "get":
