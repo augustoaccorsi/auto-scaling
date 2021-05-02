@@ -237,8 +237,20 @@ class App():
             worksheet.write('G1', 'instance')
             worksheet.write('H1', 'status')
             worksheet.write('I1', 'cpu_acc')
-            worksheet.write('J1', 'netin_acc')
-            worksheet.write('K1', 'netout_acc')
+            worksheet.write('J1', 'cpu_model')
+            worksheet.write('K1', 'cpu_pred1')
+            worksheet.write('L1', 'cpu_pred2')
+            worksheet.write('M1', 'cpu_pred3')
+            worksheet.write('N1', 'netin_acc')
+            worksheet.write('O1', 'netin_model')
+            worksheet.write('P1', 'netin_pred1')
+            worksheet.write('Q1', 'netin_pred2')
+            worksheet.write('R1', 'netin_pred3')
+            worksheet.write('S1', 'netout_acc')
+            worksheet.write('T1', 'netout_model')
+            worksheet.write('U1', 'netout_pred1')
+            worksheet.write('V1', 'netout_pred2')
+            worksheet.write('W1', 'netout_pred3')
             workbook.close()
 
     def save_into_file(self, datetime, cpu, netin, netout, packetin, packetout, lifecycleState, instance):
@@ -368,7 +380,7 @@ class App():
 
                 print("Instance "+str(count)+":  "+instance.getInstanceId())
                 print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
-                print("Launch Time: "+instance.getLaunchTime().strftime('%m/%d/%Y %H:%M:%S'))
+                #print("Launch Time: "+instance.getLaunchTime().strftime('%m/%d/%Y %H:%M:%S'))
         
                 try:
                     cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
@@ -379,14 +391,14 @@ class App():
                 
                 try:
                     netIn = str(float(networkIn['Datapoints'][0]['Maximum'])/1000) # valor em kB
-                    print("Network In: "+netIn+" Kb")
+                    print("Network In: "+netIn+"Kb")
                     instance.setNetworkIn(netIn)
                 except:
                     netIn = None
                 
                 try:
                     netOut = str(float(networkOut['Datapoints'][0]['Maximum'])/1000) # valor em kB
-                    print("Network Out: "+netOut+" Kb")
+                    print("Network Out: "+netOut+"Kb")
                     instance.setNetworkOut(netOut)
                 except:
                     netOut = None
@@ -405,18 +417,18 @@ class App():
                 except:
                     packetout = None
 
-                if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService":
+                if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
                     self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetin, packetout, instance.getLifecycleState(), instance.getInstanceId())
                 print()
         
         if self._cooldown == False:
-            autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
+            autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg, cpuUtilization, netIn, netOut)
             autoscaling.process()
             self._cooldown = autoscaling._cooldown
         else:
             self._cooldown_trigger +=1
-            print("Cooldown process "+str(self._cooldown_trigger))
-            if self._cooldown_trigger == 5:
+            print("Cooldown "+str(self._cooldown_trigger))
+            if self._cooldown_trigger == 4:
                 self._cooldown = False
                 self._cooldown_trigger = 0
         self.describe()

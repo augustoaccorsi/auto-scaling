@@ -42,6 +42,8 @@ class Timeseries:
         self._corr = 0
         self._minmax = 0
 
+        self._arima_order = ""
+
     def plot(self):
         self._df.plot(figsize=(12,5))
         plt.show()
@@ -69,11 +71,12 @@ class Timeseries:
     
     def fit_model(self):
         try:
-            self._model = ARIMA(self._df, order=self._arima.get_params()['order'])
-            #self._model = ARIMA(self._df, order=(5,1,0))
+            self._model = ARIMA(self._df, order=(5,1,0)) # try (5,1,0) to induce stationary
+            self._arima_order =  "(5,1,0)"
             self._model_fit = self._model.fit(disp=0)
         except:
-            self._model = ARIMA(self._df, order=(5,1,0))
+            self._model = ARIMA(self._df, order=self._arima.get_params()['order'])
+            self._arima_order = str(self._arima.get_params()['order'])
             self._model_fit = self._model.fit(disp=0)
         
         return self._model_fit.summary()
@@ -98,8 +101,8 @@ class Timeseries:
         
         try:
             for t in range(len(self._test)):
-                self.model = ARIMA(self._history, order=self._arima.get_params()['order'])
-                #self.model = ARIMA(self._history, order=(5, 1, 0))
+                self.model = ARIMA(self._history, order=(5, 1, 0))  # try (5,1,0) to induce stationary
+                self._arima_order =  "(5,1,0)"
                 self._model_fit = self.model.fit(disp=0)
                 output = self._model_fit.forecast()
                 yhat = output[0]
@@ -110,7 +113,8 @@ class Timeseries:
             self._predictions = list()
             self._history = [x for x in self._train]
             for t in range(len(self._test)):
-                self.model = ARIMA(self._history, order=(5, 1, 0))
+                self.model = ARIMA(self._history, order=self._arima.get_params()['order'])
+                self._arima_order = str(self._arima.get_params()['order'])
                 self._model_fit = self.model.fit(disp=0)
                 output = self._model_fit.forecast()
                 yhat = output[0]
@@ -154,8 +158,9 @@ class Timeseries:
     def print_data(self):
         print("Dataset: "+self._path)
         print("Accuracy: "+str(self._accuracy))
+        #print("Forecast Values: "+str(self._forecast[0]))
         print("Forecast Values: "+str(self._forecast))
-        print("ARIMA: "+str(self._arima.get_params()['order']))
+        print("ARIMA: "+self._arima_order)
 
     def execute(self, output, next):
         try:
