@@ -5,7 +5,7 @@ from random import seed
 from random import randint
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-
+import time
 
 class Run:
 
@@ -69,12 +69,20 @@ if __name__ == '__main__':
                 asyncio.ensure_future(run.call_url("post"))
             if sys.argv[1] == "get":
                 asyncio.ensure_future(run.call_url("get"))
+            if sys.argv[1] == "sleep":
+                print("sleep for 5")
+                time.sleep(300) #5 minutes
+                print("just woke up")
+                asyncio.ensure_future(run.call_url("post"))
         except:
-            for i in range(int(sys.argv[1])):
-                if sys.argv[2] == "post":
-                    run.call_request_post(i, 950, 950, 950)
-                else:
-                    run.call_request_get(i)
+            try:
+                for i in range(int(sys.argv[1])):
+                    if sys.argv[2] == "post":
+                        run.call_request_post(i, 950, 950, 950)
+                    else:
+                        run.call_request_get(i)
+            except:
+                asyncio.ensure_future(run.call_url("post"))
             pass
         loop.run_forever()
     except KeyboardInterrupt:

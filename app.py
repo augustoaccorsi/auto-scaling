@@ -253,7 +253,9 @@ class App():
             worksheet.write('W1', 'netout_pred3')
             workbook.close()
 
-    def save_into_file(self, datetime, cpu, netin, netout, packetin, packetout, lifecycleState, instance):
+    #def save_into_file(self, datetime, cpu, netin, netout, packetin, packetout, lifecycleState, instance):
+    def save_into_file(self, datetime, cpu, netin, netout, packetin, packetout):
+
         workbook = load_workbook(filename = 'dataset\\cpu.xlsx')
         worksheet = workbook['Sheet1']
         
@@ -330,8 +332,8 @@ class App():
             worksheet.cell(column=5,row=newRowLocation, value=packetin)
         if packetout != None:
             worksheet.cell(column=6,row=newRowLocation, value=packetout)
-        worksheet.cell(column=7,row=newRowLocation, value=instance)
-        worksheet.cell(column=8,row=newRowLocation, value=lifecycleState)
+        #worksheet.cell(column=7,row=newRowLocation, value=instance)
+        #worksheet.cell(column=8,row=newRowLocation, value=lifecycleState)
 
         workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
@@ -348,6 +350,20 @@ class App():
 
     def read_instances(self):
         count = 0
+        cpu_total = 0
+        netin_total = 0
+        netout_total = 0
+        packin_total = 0
+        packout_total = 0
+
+        
+        end_time = datetime.datetime.utcnow()
+        
+        start_time = end_time - datetime.timedelta(seconds=120) #buscar dados dos ultimos 2 minutos
+
+        start_time = start_time.strftime('%m/%d/%Y %H:%M:%S')
+        end_time = end_time.strftime('%m/%d/%Y %H:%M:%S')
+
         for instance in self._instances:
 
             if instance.getLifecycleState() == "Terminated":
@@ -356,12 +372,6 @@ class App():
             else:
 
                 count+=1
-                end_time = datetime.datetime.utcnow()
-                
-                start_time = end_time - datetime.timedelta(seconds=120) #buscar dados dos ultimos 2 minutos
-
-                start_time = start_time.strftime('%m/%d/%Y %H:%M:%S')
-                end_time = end_time.strftime('%m/%d/%Y %H:%M:%S')
             
                 cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
                 networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
@@ -384,6 +394,8 @@ class App():
         
                 try:
                     cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
+                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
+                        cpu_total = cpu_total + cpuUtilization
                     print("CPU Usage: "+str(cpuUtilization)+"%")
                     instance.setCpuUtilization(cpuUtilization)
                 except:
@@ -391,6 +403,8 @@ class App():
                 
                 try:
                     netIn = str(float(networkIn['Datapoints'][0]['Maximum'])/1000) # valor em kB
+                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
+                        netin_total = netin_total + float(netIn)
                     print("Network In: "+netIn+"Kb")
                     instance.setNetworkIn(netIn)
                 except:
@@ -398,6 +412,8 @@ class App():
                 
                 try:
                     netOut = str(float(networkOut['Datapoints'][0]['Maximum'])/1000) # valor em kB
+                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
+                        netout_total = netout_total + float(netOut)
                     print("Network Out: "+netOut+"Kb")
                     instance.setNetworkOut(netOut)
                 except:
@@ -405,6 +421,8 @@ class App():
                 
                 try:
                     packetin = str(networkPacketsIn['Datapoints'][0]['Average'])
+                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
+                        packin_total = packin_total +packetin
                     print("Network Packages In: "+packetin)
                     instance.setNetworkPacketsIn(packetin)
                 except:
@@ -412,18 +430,27 @@ class App():
                 
                 try:
                     packetout = str(networkPacketsOut['Datapoints'][0]['Average'])
+                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
+                        packout_total = packout_total + packetin
                     print("Network Packages Out: "+packetout)
                     instance.setNetworkPacketsOut(packetout)
                 except:
                     packetout = None
-
-                if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
-                    self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetin, packetout, instance.getLifecycleState(), instance.getInstanceId())
+                
                 print()
+
+                #if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
+                #    self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetin, packetout, instance.getLifecycleState(), instance.getInstanceId())
+                #print()
+                
+        self.save_into_file(end_time, cpu_total, netin_total, netin_total, packin_total, packout_total)
         
         if self._cooldown == False:
-            autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg, cpuUtilization, netIn, netOut)
-            autoscaling.process()
+            try:
+                autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg, cpuUtilization, netIn, netOut)
+            except:
+                autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg, None, None, None)
+            autoscaling.execute()
             self._cooldown = autoscaling._cooldown
         else:
             self._cooldown_trigger +=1
