@@ -97,6 +97,7 @@ class Autoscaling:
         return True 
 
     def proactive_scale(self, microservice):
+        return False
         # creating thread
         print("Start Forecasting")
 
