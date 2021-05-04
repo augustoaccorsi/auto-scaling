@@ -75,41 +75,31 @@ class Autoscaling:
 
         workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
-    '''
-    def create_threads(self, dataset, output, forcast):
-        queue = queue.Queue()
-        return threading.Thread(target=self.arima_call, args=(dataset, output, forecast, queue))
-    '''
+
     def scale(self, microservice):
         if microservice._cpu_utilization >= self._SCALE_UP:
-            print("pro up")
             total =  (microservice._cpu_total * 100) / ((len(microservice._instances)+1) * 100) 
             if total >= self._SCALE_UP:
-                print("pro up2")
                 return self.scale_up(2)
             else:
-                print("pro up1")
                 return self.scale_up(1)
-        elif microservice._cpu_utilization <= self._SCALE_DOWN and len(microservice._instances) > 1: 
-            print("pro down")
-            
+        elif microservice._cpu_utilization <= self._SCALE_DOWN and len(microservice._instances) > 1:            
             try:
                 total =  (microservice._cpu_total * 100) / ((len(microservice._instances)-1) * 100)
             except:
                 total =  (microservice._cpu_total * 100) / ((len(microservice._instances)) * 100)
 
             if total <= self._SCALE_DOWN and len(microservice._instances) > 2:
-                print("pro down2")
                 return self.scale_down(2)
             else:
-                print("pro down1")
                 return self.scale_down(1)
         
-        return True
+        return True 
 
     def proactive_scale(self, microservice):
         # creating thread
         print("Start Forecasting")
+
         now = datetime.datetime.now()
 
         q1 = queue.Queue()
