@@ -169,8 +169,8 @@ class Instance:
         self._cpuUtilization = 0.0
         self._networkIn = ""
         self._networkOut = ""
-        self._networkPacketsIn = ""
-        self._networkPacketsOut = ""
+        self._networkPacketsIn = 0.0
+        self._networkPacketsOut = 0.0
         self._triggerUp = 0
         self._triggerDown = 0
         self._launchTime = ""
