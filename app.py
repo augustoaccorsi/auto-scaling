@@ -2,6 +2,7 @@ import json, os, xlsxwriter, datetime, timedelta, boto3, sys
 from openpyxl import load_workbook
 from autoscalinggroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
 from autoscaling import Autoscaling
+from microservice import Microservice
 import weakref
 
 class App():
@@ -390,12 +391,9 @@ class App():
 
                 print("Instance "+str(count)+":  "+instance.getInstanceId())
                 print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
-                #print("Launch Time: "+instance.getLaunchTime().strftime('%m/%d/%Y %H:%M:%S'))
         
                 try:
                     cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
-                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
-                        cpu_total = cpu_total + cpuUtilization
                     print("CPU Usage: "+str(cpuUtilization)+"%")
                     instance.setCpuUtilization(cpuUtilization)
                 except:
@@ -403,8 +401,6 @@ class App():
                 
                 try:
                     netIn = str(float(networkIn['Datapoints'][0]['Maximum'])/1000) # valor em kB
-                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
-                        netin_total = netin_total + float(netIn)
                     print("Network In: "+netIn+"Kb")
                     instance.setNetworkIn(netIn)
                 except:
@@ -412,8 +408,6 @@ class App():
                 
                 try:
                     netOut = str(float(networkOut['Datapoints'][0]['Maximum'])/1000) # valor em kB
-                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
-                        netout_total = netout_total + float(netOut)
                     print("Network Out: "+netOut+"Kb")
                     instance.setNetworkOut(netOut)
                 except:
@@ -421,8 +415,6 @@ class App():
                 
                 try:
                     packetin = str(networkPacketsIn['Datapoints'][0]['Average'])
-                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
-                        packin_total = packin_total +packetin
                     print("Network Packages In: "+packetin)
                     instance.setNetworkPacketsIn(packetin)
                 except:
@@ -430,8 +422,6 @@ class App():
                 
                 try:
                     packetout = str(networkPacketsOut['Datapoints'][0]['Average'])
-                    if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
-                        packout_total = packout_total + packetin
                     print("Network Packages Out: "+packetout)
                     instance.setNetworkPacketsOut(packetout)
                 except:
@@ -442,15 +432,28 @@ class App():
                 #if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService" and self._cooldown == False:
                 #    self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetin, packetout, instance.getLifecycleState(), instance.getInstanceId())
                 #print()
-                
-        self.save_into_file(end_time, cpu_total, netin_total, netin_total, packin_total, packout_total)
-        
+
+
+        utilization = (cpu_total * 100) / (len(self._instances) * 100)
+
         if self._cooldown == False:
+            
+            microservice = Microservice(self._instances)
+            
+            print("----")
+            print("Total CPU: "+ str(microservice._cpu_total))
+            print("Utilization: "+str(microservice._cpu_utilization))
+            print("Total Network In: "+ str(microservice._network_in))
+            print("Total Network Out: "+ str(microservice._network_out))
+            print("----")
+            print()
+            
+            self.save_into_file(end_time, microservice._cpu_utilization, microservice._network_in, microservice._network_out, microservice._packet_in, microservice._packet_out)
             try:
                 autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg, cpuUtilization, netIn, netOut)
             except:
                 autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg, None, None, None)
-            autoscaling.execute()
+            autoscaling.execute(microservice)
             self._cooldown = autoscaling._cooldown
         else:
             self._cooldown_trigger +=1
