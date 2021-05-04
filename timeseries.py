@@ -6,7 +6,6 @@ from pandas.plotting import autocorrelation_plot
 from statsmodels.tsa.stattools import adfuller
 from pmdarima import auto_arima
 from statsmodels.tsa.arima_model import ARIMA
-from sklearn.metrics import mean_squared_error
 import warnings, math, sys
 from statsmodels.tsa.stattools import acf
 warnings.filterwarnings("ignore")   
@@ -71,12 +70,12 @@ class Timeseries:
     
     def fit_model(self):
         try:
-            self._model = ARIMA(self._df, order=(5,1,0)) # try (5,1,0) to induce stationary
-            self._arima_order =  "(5,1,0)"
-            self._model_fit = self._model.fit(disp=0)
-        except:
             self._model = ARIMA(self._df, order=self._arima.get_params()['order'])
             self._arima_order = str(self._arima.get_params()['order'])
+            self._model_fit = self._model.fit(disp=0)
+        except:
+            self._model = ARIMA(self._df, order=(5,1,0)) # try (5,1,0) to induce stationary
+            self._arima_order =  "(5,1,0)"
             self._model_fit = self._model.fit(disp=0)
         
         return self._model_fit.summary()
@@ -101,8 +100,8 @@ class Timeseries:
         
         try:
             for t in range(len(self._test)):
-                self.model = ARIMA(self._history, order=(5, 1, 0))  # try (5,1,0) to induce stationary
-                self._arima_order =  "(5,1,0)"
+                self.model = ARIMA(self._history, order=self._arima.get_params()['order'])
+                self._arima_order = str(self._arima.get_params()['order'])
                 self._model_fit = self.model.fit(disp=0)
                 output = self._model_fit.forecast()
                 yhat = output[0]
@@ -113,8 +112,8 @@ class Timeseries:
             self._predictions = list()
             self._history = [x for x in self._train]
             for t in range(len(self._test)):
-                self.model = ARIMA(self._history, order=self._arima.get_params()['order'])
-                self._arima_order = str(self._arima.get_params()['order'])
+                self.model = ARIMA(self._history, order=(5, 1, 0))  # try (5,1,0) to induce stationary
+                self._arima_order =  "(5,1,0)"
                 self._model_fit = self.model.fit(disp=0)
                 output = self._model_fit.forecast()
                 yhat = output[0]

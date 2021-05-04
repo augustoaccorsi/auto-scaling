@@ -254,8 +254,7 @@ class App():
             worksheet.write('W1', 'netout_pred3')
             workbook.close()
 
-    #def save_into_file(self, datetime, cpu, netin, netout, packetin, packetout, lifecycleState, instance):
-    def save_into_file(self, datetime, cpu, netin, netout, packetin, packetout):
+    def save_into_file(self, datetime, microservice):
 
         workbook = load_workbook(filename = 'dataset\\cpu.xlsx')
         worksheet = workbook['Sheet1']
@@ -263,8 +262,8 @@ class App():
         newRowLocation = worksheet.max_row +1
 
         worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if cpu != None:
-            worksheet.cell(column=2,row=newRowLocation, value=cpu)
+        if microservice._cpu_utilization != None:
+            worksheet.cell(column=2,row=newRowLocation, value=microservice._cpu_utilization)
 
         workbook.save(filename = 'dataset\\cpu.xlsx')
         workbook.close()
@@ -275,8 +274,8 @@ class App():
         newRowLocation = worksheet.max_row +1
 
         worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if netin != None:
-            worksheet.cell(column=2,row=newRowLocation, value=netin)
+        if microservice._network_in != None:
+            worksheet.cell(column=2,row=newRowLocation, value=microservice._network_in)
 
         workbook.save(filename = 'dataset\\netin.xlsx')
         workbook.close()
@@ -287,8 +286,8 @@ class App():
         newRowLocation = worksheet.max_row +1
 
         worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if netout != None:
-            worksheet.cell(column=2,row=newRowLocation, value=netout)
+        if microservice._network_out != None:
+            worksheet.cell(column=2,row=newRowLocation, value=microservice._network_out)
 
         workbook.save(filename = 'dataset\\netout.xlsx')
         workbook.close()
@@ -299,8 +298,8 @@ class App():
         newRowLocation = worksheet.max_row +1
 
         worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if packetin != None:
-            worksheet.cell(column=2,row=newRowLocation, value=packetin)
+        if microservice._packet_in != None:
+            worksheet.cell(column=2,row=newRowLocation, value=microservice._packet_in)
 
         workbook.save(filename = 'dataset\\packetin.xlsx')
         workbook.close()
@@ -311,8 +310,8 @@ class App():
         newRowLocation = worksheet.max_row +1
 
         worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if packetout != None:
-            worksheet.cell(column=2,row=newRowLocation, value=packetout)
+        if microservice._packet_out != None:
+            worksheet.cell(column=2,row=newRowLocation, value=microservice._packet_out)
 
         workbook.save(filename = 'dataset\\packetout.xlsx')
         workbook.close()
@@ -323,18 +322,16 @@ class App():
         newRowLocation = worksheet.max_row +1
 
         worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if cpu != None:
-            worksheet.cell(column=2,row=newRowLocation, value=cpu)
-        if netin != None:
-            worksheet.cell(column=3,row=newRowLocation, value=netin)
-        if netout != None:
-            worksheet.cell(column=4,row=newRowLocation, value=netout)
-        if packetin != None:
-            worksheet.cell(column=5,row=newRowLocation, value=packetin)
-        if packetout != None:
-            worksheet.cell(column=6,row=newRowLocation, value=packetout)
-        #worksheet.cell(column=7,row=newRowLocation, value=instance)
-        #worksheet.cell(column=8,row=newRowLocation, value=lifecycleState)
+        if microservice._cpu_utilization != None:
+            worksheet.cell(column=2,row=newRowLocation, value=microservice._cpu_utilization)
+        if microservice._network_in != None:
+            worksheet.cell(column=3,row=newRowLocation, value=microservice._network_in)
+        if microservice._network_out != None:
+            worksheet.cell(column=4,row=newRowLocation, value=microservice._network_out)
+        if microservice._packet_in != None:
+            worksheet.cell(column=5,row=newRowLocation, value=microservice._packet_in)
+        if microservice._packet_out != None:
+            worksheet.cell(column=6,row=newRowLocation, value=microservice._packet_out)
 
         workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
@@ -433,9 +430,6 @@ class App():
                 #    self.save_into_file(end_time, cpuUtilization, netIn, netOut, packetin, packetout, instance.getLifecycleState(), instance.getInstanceId())
                 #print()
 
-
-        utilization = (cpu_total * 100) / (len(self._instances) * 100)
-
         if self._cooldown == False:
             
             microservice = Microservice(self._instances)
@@ -448,12 +442,11 @@ class App():
             print("----")
             print()
             
-            self.save_into_file(end_time, microservice._cpu_utilization, microservice._network_in, microservice._network_out, microservice._packet_in, microservice._packet_out)
-            try:
-                autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg, cpuUtilization, netIn, netOut)
-            except:
-                autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg, None, None, None)
+            self.save_into_file(end_time, microservice)
+            
+            autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
             autoscaling.execute(microservice)
+            
             self._cooldown = autoscaling._cooldown
         else:
             self._cooldown_trigger +=1

@@ -34,7 +34,7 @@ class Run:
     async def call_url(self, type):
         #await asyncio.sleep(600)
         count = 0
-        while True:
+        while count < 2:
             minutes = randint(5, 20)
             sleep = (randint(10, 20) * 60)
             print("calls: "+str(minutes))
