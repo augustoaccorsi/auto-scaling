@@ -43,6 +43,8 @@ class Timeseries:
 
         self._arima_order = ""
 
+        self._error = False
+
     def plot(self):
         self._df.plot(figsize=(12,5))
         plt.show()
@@ -170,7 +172,8 @@ class Timeseries:
             if output == True:
                 self.print_data()
         except:
-            print("Lack data in dataset "+self._path+", please wait for more analysis")
+            print("Lack of data in dataset "+self._path+", please wait for more analysis")
+            self._error = True
 
 if __name__ == '__main__':
     try:

@@ -34,7 +34,7 @@ class Run:
         #await asyncio.sleep(600)
         count = 0
         while True:
-            minutes = randint(5, 20)
+            minutes = randint(10, 30)
             sleep = (randint(10, 20) * 60)
             print("calls: "+str(minutes))
             print("sleep: "+str(sleep/60))

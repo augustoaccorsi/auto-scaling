@@ -1,3 +1,4 @@
+from time import time
 from autoscalinggroup import Instance
 from timeseries import Timeseries
 import threading, queue, datetime
@@ -18,6 +19,7 @@ class Autoscaling:
         self._SCALE_DOWN = 30
         
         self._cooldown = False
+        self._timeseries = False
     
     def scale_up(self, instancesUp):
         self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
@@ -97,7 +99,6 @@ class Autoscaling:
         return True 
 
     def proactive_scale(self, microservice):
-        return False
         # creating thread
         print("Start Forecasting")
 
@@ -107,9 +108,9 @@ class Autoscaling:
         q2 = queue.Queue()
         q3 = queue.Queue()
 
-        t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 10, q1))
-        t2 = threading.Thread(target=self.arima_call, args=('netin', True, 10, q2))
-        t3 = threading.Thread(target=self.arima_call, args=('netout', True, 10, q3))
+        t1 = threading.Thread(target=self.arima_call, args=('cpu', False, 10, q1))
+        t2 = threading.Thread(target=self.arima_call, args=('netin', False, 10, q2))
+        t3 = threading.Thread(target=self.arima_call, args=('netout', False, 10, q3))
     
         # starting thread
         t1.start()
@@ -124,6 +125,10 @@ class Autoscaling:
         cpu = (q1.get())
         netin = (q2.get())
         netout = (q3.get())
+
+        if not cpu._error or not netin._error or not netout._error:
+            self._timeseries = True
+
         now = datetime.datetime.now() - now
 
         self.save_file(cpu, netin, netout)

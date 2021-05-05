@@ -1,3 +1,4 @@
+from enum import auto
 import json, os, xlsxwriter, datetime, timedelta, boto3, sys
 from openpyxl import load_workbook
 from autoscalinggroup import AutoScalingGroup, Instance, AvailabilityZone, LoadBalancer, EnabledMetric, Tags
@@ -36,6 +37,7 @@ class App():
         
         self._cooldown = False
         self._cooldown_trigger = 0
+        self._timeseries = False
 
         self.describe()
         
@@ -71,7 +73,6 @@ class App():
             avZone = AvailabilityZone()
             avZone.setAvailabilityZone(zone)
             availabilityZoneList.append(avZone)
-
         return availabilityZoneList
     '''
     def build_load_balancers(self, loadBalancers):
@@ -436,13 +437,15 @@ class App():
             print("Total Network Out: "+ str(microservice._network_out))
             print("----")
             print()
+
+            if microservice._cpu_total > 0 and microservice._cpu_utilization > 0 and microservice._network_in > 0 and microservice._network_out:
+                self.save_into_file(end_time, microservice)
             
-            self.save_into_file(end_time, microservice)
+                autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
+                autoscaling.execute(microservice)
             
-            autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
-            autoscaling.execute(microservice)
-            
-            self._cooldown = autoscaling._cooldown
+                self._cooldown = autoscaling._cooldown
+                self._timeseries = autoscaling._timeseries
         else:
             self._cooldown_trigger +=1
             print("Cooldown "+str(self._cooldown_trigger))
