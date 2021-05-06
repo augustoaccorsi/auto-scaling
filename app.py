@@ -209,22 +209,6 @@ class App():
             worksheet.write('A1', 'date', format)
             worksheet.write('B1', 'value')
             workbook.close()
-
-        if not os.path.isfile('dataset\\packetin.xlsx'):
-            workbook = xlsxwriter.Workbook('dataset\\packetin.xlsx')
-            worksheet = workbook.add_worksheet()
-            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
-            worksheet.write('A1', 'date', format)
-            worksheet.write('B1', 'value')
-            workbook.close()
-
-        if not os.path.isfile('dataset\\packetout.xlsx'):
-            workbook = xlsxwriter.Workbook('dataset\\packetout.xlsx')
-            worksheet = workbook.add_worksheet()
-            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
-            worksheet.write('A1', 'date', format)
-            worksheet.write('B1', 'value')
-            workbook.close()
         
         if not os.path.isfile('dataset\\all.xlsx'):
             workbook = xlsxwriter.Workbook('dataset\\all.xlsx')
@@ -234,8 +218,8 @@ class App():
             worksheet.write('B1', 'cpu')
             worksheet.write('C1', 'netin')
             worksheet.write('D1', 'netout')
-            worksheet.write('E1', 'packin')
-            worksheet.write('F1', 'packout')
+            worksheet.write('E1', 'scale')
+            worksheet.write('F1', '')
             worksheet.write('G1', 'instance')
             worksheet.write('H1', 'status')
             worksheet.write('I1', 'cpu_acc')
@@ -293,30 +277,6 @@ class App():
         workbook.save(filename = 'dataset\\netout.xlsx')
         workbook.close()
 
-        workbook = load_workbook(filename = 'dataset\\packetin.xlsx')
-        worksheet = workbook['Sheet1']
-        
-        newRowLocation = worksheet.max_row +1
-
-        worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if microservice._packet_in != None:
-            worksheet.cell(column=2,row=newRowLocation, value=microservice._packet_in)
-
-        workbook.save(filename = 'dataset\\packetin.xlsx')
-        workbook.close()
-
-        workbook = load_workbook(filename = 'dataset\\packetout.xlsx')
-        worksheet = workbook['Sheet1']
-        
-        newRowLocation = worksheet.max_row +1
-
-        worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if microservice._packet_out != None:
-            worksheet.cell(column=2,row=newRowLocation, value=microservice._packet_out)
-
-        workbook.save(filename = 'dataset\\packetout.xlsx')
-        workbook.close()
-
         workbook = load_workbook(filename = 'dataset\\all.xlsx')
         worksheet = workbook['Sheet1']
         
@@ -329,10 +289,6 @@ class App():
             worksheet.cell(column=3,row=newRowLocation, value=microservice._network_in)
         if microservice._network_out != None:
             worksheet.cell(column=4,row=newRowLocation, value=microservice._network_out)
-        if microservice._packet_in != None:
-            worksheet.cell(column=5,row=newRowLocation, value=microservice._packet_in)
-        if microservice._packet_out != None:
-            worksheet.cell(column=6,row=newRowLocation, value=microservice._packet_out)
 
         workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
@@ -349,11 +305,6 @@ class App():
 
     def read_instances(self):
         count = 0
-        cpu_total = 0
-        netin_total = 0
-        netout_total = 0
-        packin_total = 0
-        packout_total = 0
 
         end_time = datetime.datetime.utcnow()
         
@@ -374,8 +325,6 @@ class App():
                 cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
                 networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
                 networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Maximum")
-                networkPacketsIn =  self.get_metric("NetworkPacketsIn", instance.getInstanceId(), start_time, end_time, "Average")
-                networkPacketsOut =  self.get_metric("NetworkPacketsOut", instance.getInstanceId(), start_time, end_time, "Average")
                         
                 state = self._ec2.describe_instances(InstanceIds=[instance.getInstanceId()])
                 instance.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
@@ -409,21 +358,7 @@ class App():
                     instance.setNetworkOut(netOut)
                 except:
                     netOut = None
-                
-                try:
-                    packetin = str(networkPacketsIn['Datapoints'][0]['Average'])
-                    print("Network Packages In: "+packetin)
-                    instance.setNetworkPacketsIn(packetin)
-                except:
-                    packetin = None
-                
-                try:
-                    packetout = str(networkPacketsOut['Datapoints'][0]['Average'])
-                    print("Network Packages Out: "+packetout)
-                    instance.setNetworkPacketsOut(packetout)
-                except:
-                    packetout = None
-                
+
                 print()
 
         if self._cooldown == False:

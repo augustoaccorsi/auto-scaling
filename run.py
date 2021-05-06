@@ -35,11 +35,13 @@ class Run:
     async def auto_scaling_check_local(self):
         count = 0
         while True:
+            start = datetime.datetime.now()
             count +=1
             print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg"+" at "+datetime.datetime.utcnow().strftime('%m/%d/%Y %H:%M:%S'))
             print()
             self._localApp.read_instances()
-            print("Analysis Completed")
+            end = datetime.datetime.now() - start
+            print("Analysis Completed at "+str(end))
             print("----------------------------------")
             try:
                 await asyncio.sleep(int(sys.argv[1]))
@@ -47,7 +49,8 @@ class Run:
                 try:
                     await asyncio.sleep(int(sys.argv[1]))
                 except:
-                    if self._localApp._cooldown == False and self._localApp._timeseries == True and count >= 40:
+                    if end.total_seconds() > 60:
+                    #if self._localApp._cooldown == False and self._localApp._timeseries == True and count >= 40:
                         await asyncio.sleep(5)
                     else:
                         await asyncio.sleep(60)

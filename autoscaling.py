@@ -40,6 +40,13 @@ class Autoscaling:
         print()
         queue.put(timeseries)
     
+    def update_file(self, scale):        
+        workbook = load_workbook(filename = 'dataset\\all.xlsx')
+        worksheet = workbook['Sheet1']
+        worksheet.cell(column=5,row=worksheet.max_row, value=scale)
+        workbook.save(filename = 'dataset\\all.xlsx')
+        workbook.close()
+
     def save_file(self, cpu, netin, netout):
         workbook = load_workbook(filename = 'dataset\\all.xlsx')
         worksheet = workbook['Sheet1']
@@ -82,8 +89,10 @@ class Autoscaling:
         if microservice._cpu_utilization >= self._SCALE_UP:
             total =  (microservice._cpu_total * 100) / ((len(microservice._instances)+1) * 100) 
             if total >= self._SCALE_UP:
+                self.update_file(1)
                 return self.scale_up(2)
             else:
+                self.update_file(1)
                 return self.scale_up(1)
         elif microservice._cpu_utilization <= self._SCALE_DOWN and len(microservice._instances) > 1:            
             try:
@@ -92,11 +101,13 @@ class Autoscaling:
                 total =  (microservice._cpu_total * 100) / ((len(microservice._instances)) * 100)
 
             if total <= self._SCALE_DOWN and len(microservice._instances) > 2:
+                self.update_file(2)
                 return self.scale_down(2)
             else:
+                self.update_file(2)
                 return self.scale_down(1)
         
-        return True 
+        return False 
 
     def proactive_scale(self, microservice):
         # creating thread
@@ -108,9 +119,9 @@ class Autoscaling:
         q2 = queue.Queue()
         q3 = queue.Queue()
 
-        t1 = threading.Thread(target=self.arima_call, args=('cpu', False, 10, q1))
-        t2 = threading.Thread(target=self.arima_call, args=('netin', False, 10, q2))
-        t3 = threading.Thread(target=self.arima_call, args=('netout', False, 10, q3))
+        t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 10, q1))
+        t2 = threading.Thread(target=self.arima_call, args=('netin', True, 10, q2))
+        t3 = threading.Thread(target=self.arima_call, args=('netout', True, 10, q3))
     
         # starting thread
         t1.start()
@@ -144,6 +155,11 @@ class Autoscaling:
             netin_count = 0
             netout_count = 0
 
+            # crescimento de CPU é diretamente proporcional ao crescimento de Rede
+
+
+
+
             for instance in microservice._instances:
                 if abs(float(cpu._forecast[0])-float(microservice._cpu_total)) >= self._PROACTIVE_DIFF:
                     cpu_count +=1
@@ -164,9 +180,12 @@ class Autoscaling:
         return False
 
     def reactive_scale(self, microservice):
-        return self.scale(microservice)
+        if not self.scale(microservice):
+            self.update_file(0)
+            return False
+        return True
 
-    def execute(self, microservice):        
+    def execute(self, microservice):
         if not self.proactive_scale(microservice):
             return self.reactive_scale(microservice)
         else:
