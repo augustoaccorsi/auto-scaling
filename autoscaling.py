@@ -4,7 +4,7 @@ from timeseries import Timeseries
 import threading, queue, datetime
 from openpyxl import load_workbook
 from microservice import Microservice
-
+import pandas as pd
 
 class Autoscaling:
     def __init__(self, instances, autoScalingGroup, autoScalingClient):
@@ -17,9 +17,67 @@ class Autoscaling:
         self._ACCURACY = 70
         self._SCALE_UP = 70
         self._SCALE_DOWN = 30
+
+        self._CPU_UPPER_TRESHOLD = 100000
+        self._CPU_LOWER_TRESHOLD = 100000
+
+        self._NETIN_UPPER_TRESHOLD = 100000
+        self._NETIN_LOWER_TRESHOLD = 100000
+
+        self._NETOUT_UPPER_TRESHOLD = 100000
+        self._NETOUT_LOWER_TRESHOLD = 100000
         
         self._cooldown = False
         self._timeseries = False
+        
+        self.set_thresholds()
+        
+    def calculate_threasholds(self, sum, count, values):
+
+        avarage = sum/count
+        upper = sum*0.9
+
+        if count % 2 == 0:
+            median1 = values[count//2]
+            median2 = values[count//2 - 1]
+            lower = (median1 + median2)/2
+        else:
+            lower = [count//2]
+
+        return upper, lower
+
+    def get_dataset_data(self, dataset):
+        data_xls = pd.read_excel('dataset\\'+dataset+'.xlsx', 'Sheet1', dtype=str, index_col=None)
+        data_xls.to_csv('dataset\\'+dataset+'.csv', encoding='utf-8', index=False) 
+        df=pd.read_csv('dataset\\'+dataset+'.csv')
+
+        date, value = df.date.to_list(), df.value.to_list()
+
+        try:
+            last_read = datetime.datetime.strptime(date[len(date)-1], '%m/%d/%Y %H:%M:%S')
+        except:
+            last_read = datetime.datetime.strptime(date[len(date)-1], '%m/%d/%Y %H:%M')
+
+        sum, count = 0, 0
+        values = []
+
+        for i in reversed(range(len(value))):
+            try:
+                aux = (last_read - datetime.datetime.strptime(date[i], '%m/%d/%Y %H:%M:%S')).total_seconds()
+            except:
+                aux = (last_read - datetime.datetime.strptime(date[i], '%m/%d/%Y %H:%M')).total_seconds()
+            if aux <= 3600: 
+                values.append(value[i])
+                sum += float(value[i])
+                count += 1
+        
+        return self.calculate_threasholds(sum, count, values) 
+
+
+    def set_thresholds(self):
+        self._CPU_UPPER_TRESHOLD, self._CPU_LOWER_TRESHOLD = self.get_dataset_data('cpu')
+        self._NETIN_UPPER_TRESHOLD, self._NETIN_LOWER_TRESHOLD =  self.get_dataset_data('netin')
+        self._NETOUT_UPPER_TRESHOLD, self._NETOUT_LOWER_TRESHOLD = self.get_dataset_data('netout')
     
     def scale_up(self, instancesUp):
         self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
@@ -109,19 +167,14 @@ class Autoscaling:
         
         return False 
 
-    def proactive_scale(self, microservice):
-        # creating thread
-        print("Start Forecasting")
-
-        now = datetime.datetime.now()
-
+    def arima(self):
         q1 = queue.Queue()
         q2 = queue.Queue()
         q3 = queue.Queue()
 
-        t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 10, q1))
-        t2 = threading.Thread(target=self.arima_call, args=('netin', True, 10, q2))
-        t3 = threading.Thread(target=self.arima_call, args=('netout', True, 10, q3))
+        t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 1, q1))
+        t2 = threading.Thread(target=self.arima_call, args=('netin', True, 1, q2))
+        t3 = threading.Thread(target=self.arima_call, args=('netout', True, 1, q3))
     
         # starting thread
         t1.start()
@@ -133,9 +186,15 @@ class Autoscaling:
         t2.join()
         t3.join() 
   
-        cpu = (q1.get())
-        netin = (q2.get())
-        netout = (q3.get())
+        return q1.get(), q2.get(), q3.get()
+
+    def proactive_scale(self, microservice):
+        # creating thread
+        print("Start Forecasting")
+
+        now = datetime.datetime.now()
+
+        cpu, netin, netout = self.arima()
 
         if not cpu._error or not netin._error or not netout._error:
             self._timeseries = True
