@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 class Timeseries:
 
-    def __init__(self, path):
+    def __init__(self, path):   
         data_xls = pd.read_excel('dataset\\'+path+'.xlsx', 'Sheet1', dtype=str, index_col=None)
         data_xls.to_csv('dataset\\'+path+'.csv', encoding='utf-8', index=False) 
         self._df=pd.read_csv('dataset\\'+path+'.csv', index_col='date',parse_dates=True)
