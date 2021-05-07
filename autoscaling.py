@@ -73,7 +73,6 @@ class Autoscaling:
         
         return self.calculate_threasholds(sum, count, values) 
 
-
     def set_thresholds(self):
         self._CPU_UPPER_TRESHOLD, self._CPU_LOWER_TRESHOLD = self.get_dataset_data('cpu')
         self._NETIN_UPPER_TRESHOLD, self._NETIN_LOWER_TRESHOLD =  self.get_dataset_data('netin')
@@ -107,38 +106,44 @@ class Autoscaling:
 
     def save_file(self, cpu, netin, netout):
         workbook = load_workbook(filename = 'dataset\\all.xlsx')
-        worksheet = workbook['Sheet1']
+        worksheet = workbook['Sheet1']        
         
-        worksheet.cell(column=9,row=worksheet.max_row, value=cpu._accuracy)
-        worksheet.cell(column=10,row=worksheet.max_row, value=cpu._arima_order)
+        worksheet.cell(column=7,row=worksheet.max_row, value=str(self._CPU_UPPER_TRESHOLD))        
+        worksheet.cell(column=8,row=worksheet.max_row, value=str(self._CPU_LOWER_TRESHOLD))        
+        worksheet.cell(column=9,row=worksheet.max_row, value=str(self._NETIN_UPPER_TRESHOLD))       
+        worksheet.cell(column=10,row=worksheet.max_row, value=str(self._NETIN_LOWER_TRESHOLD))        
+        worksheet.cell(column=11,row=worksheet.max_row, value=str(self._NETOUT_UPPER_TRESHOLD))        
+        worksheet.cell(column=12,row=worksheet.max_row, value=str(self._NETOUT_LOWER_TRESHOLD))
+
+        worksheet.cell(column=13,row=worksheet.max_row, value=cpu._arima_order)
         try:
-            worksheet.cell(column=11,row=worksheet.max_row, value=str(cpu._forecast[0]))
-            worksheet.cell(column=12,row=worksheet.max_row, value=str(cpu._forecast[1]))
-            worksheet.cell(column=13,row=worksheet.max_row, value=str(cpu._forecast[2]))
+            worksheet.cell(column=14,row=worksheet.max_row, value=str(cpu._forecast[0]))
+            worksheet.cell(column=15,row=worksheet.max_row, value=str(cpu._forecast[1]))
+            worksheet.cell(column=16,row=worksheet.max_row, value=str(cpu._forecast[2]))
         except:
-            worksheet.cell(column=11,row=worksheet.max_row, value=str(0))
-            worksheet.cell(column=12,row=worksheet.max_row, value=str(0))
-            worksheet.cell(column=13,row=worksheet.max_row, value=str(0))
-        worksheet.cell(column=14,row=worksheet.max_row, value=netin._accuracy)
-        worksheet.cell(column=15,row=worksheet.max_row, value=netin._arima_order)
-        try:
-            worksheet.cell(column=16,row=worksheet.max_row, value=str(netin._forecast[0]))
-            worksheet.cell(column=17,row=worksheet.max_row, value=str(netin._forecast[1]))
-            worksheet.cell(column=18,row=worksheet.max_row, value=str(netin._forecast[2]))
-        except:
+            worksheet.cell(column=14,row=worksheet.max_row, value=str(0))
+            worksheet.cell(column=15,row=worksheet.max_row, value=str(0))
             worksheet.cell(column=16,row=worksheet.max_row, value=str(0))
-            worksheet.cell(column=17,row=worksheet.max_row, value=str(0))
-            worksheet.cell(column=18,row=worksheet.max_row, value=str(0))
-        worksheet.cell(column=19,row=worksheet.max_row, value=netout._accuracy)
-        worksheet.cell(column=20,row=worksheet.max_row, value=netout._arima_order)
+        worksheet.cell(column=17,row=worksheet.max_row, value=netin._accuracy)
+        worksheet.cell(column=18,row=worksheet.max_row, value=netin._arima_order)
         try:
-            worksheet.cell(column=21,row=worksheet.max_row, value=str(netout._forecast[0]))
-            worksheet.cell(column=22,row=worksheet.max_row, value=str(netout._forecast[1]))
-            worksheet.cell(column=23,row=worksheet.max_row, value=str(netout._forecast[2]))
+            worksheet.cell(column=19,row=worksheet.max_row, value=str(netin._forecast[0]))
+            worksheet.cell(column=20,row=worksheet.max_row, value=str(netin._forecast[1]))
+            worksheet.cell(column=21,row=worksheet.max_row, value=str(netin._forecast[2]))
         except:
+            worksheet.cell(column=19,row=worksheet.max_row, value=str(0))
+            worksheet.cell(column=20,row=worksheet.max_row, value=str(0))
             worksheet.cell(column=21,row=worksheet.max_row, value=str(0))
-            worksheet.cell(column=22,row=worksheet.max_row, value=str(0))
-            worksheet.cell(column=23,row=worksheet.max_row, value=str(0))
+        worksheet.cell(column=22,row=worksheet.max_row, value=netout._accuracy)
+        worksheet.cell(column=23,row=worksheet.max_row, value=netout._arima_order)
+        try:
+            worksheet.cell(column=24,row=worksheet.max_row, value=str(netout._forecast[0]))
+            worksheet.cell(column=25,row=worksheet.max_row, value=str(netout._forecast[1]))
+            worksheet.cell(column=26,row=worksheet.max_row, value=str(netout._forecast[2]))
+        except:
+            worksheet.cell(column=24,row=worksheet.max_row, value=str(0))
+            worksheet.cell(column=25,row=worksheet.max_row, value=str(0))
+            worksheet.cell(column=26,row=worksheet.max_row, value=str(0))
 
         workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
