@@ -338,7 +338,6 @@ class App():
                 autoscaling.execute(microservice)
             
                 self._cooldown = autoscaling._cooldown
-                self._timeseries = autoscaling._timeseries
         else:
             self._cooldown_trigger +=1
             print("Cooldown "+str(self._cooldown_trigger))
