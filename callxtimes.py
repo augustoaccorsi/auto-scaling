@@ -34,6 +34,11 @@ class Run:
     async def call_url(self, type):
         #await asyncio.sleep(600)
         count = 0
+        
+        print("sleeping for 8 minutes")
+        await asyncio.sleep(8*60)
+        print("woke up")
+
         while True:
             minutes = 8  #randint(5, 20)
             sleep = (8*60)#(randint(10, 20) * 60)

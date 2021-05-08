@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 from microservice import Microservice
 import pandas as pd
 import numpy as np
-import statistics
+import statistics, math
 
 class Autoscaling:
     def __init__(self, instances, autoScalingGroup, autoScalingClient):
@@ -35,8 +35,11 @@ class Autoscaling:
         
     def calculate_threasholds(self, values):
 
-        upper =  np.percentile(values, 90)
-        lower = statistics.median(values)
+        
+        upper =  np.percentile(np.sort(values), 90)
+        lower = statistics.median(np.sort(values))
+
+        #return math.modf(upper)[1], math.modf(lower)[1]
 
         return upper, lower
 
@@ -73,17 +76,17 @@ class Autoscaling:
 
         print("CPU: "+str(self._CPU_UPPER_TRESHOLD)+" / "+str(self._CPU_LOWER_TRESHOLD))
         print("IN:  "+str(self._NETIN_UPPER_TRESHOLD)+" / "+str(self._NETIN_LOWER_TRESHOLD))
-        print("OUt: "+str(self._NETOUT_UPPER_TRESHOLD)+" / "+str(self._NETOUT_LOWER_TRESHOLD))
+        print("OUT: "+str(self._NETOUT_UPPER_TRESHOLD)+" / "+str(self._NETOUT_LOWER_TRESHOLD))
     
     def scale_up(self, instancesUp):
-        self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
+        #self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
         print("Autoscaling Group scalled up, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
-        self._cooldown = True
+        #self._cooldown = True
         return True
 
     def scale_down(self, instancesDown):
         if self._auto_scaling_group.getDesiredCapacity() > 1:
-            self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - instancesDown))
+            #self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - instancesDown))
             print("Autoscaling Group scalled down, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() - instancesDown)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() - instancesDown))
             #self._cooldown = True
             return True
@@ -147,20 +150,20 @@ class Autoscaling:
 
     def scale(self, microservice):
         if microservice._cpu_utilization >= self._SCALE_UP:
-            total =  (microservice._cpu_total * 100) / ((len(microservice._instances)+1) * 100) 
+            total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100) 
             if total >= self._SCALE_UP:
                 self.update_file(1)
                 return self.scale_up(2)
             else:
                 self.update_file(1)
                 return self.scale_up(1)
-        elif microservice._cpu_utilization <= self._SCALE_DOWN and len(microservice._instances) > 1:            
+        elif microservice._cpu_utilization <= self._SCALE_DOWN and microservice._count > 1:            
             try:
-                total =  (microservice._cpu_total * 100) / ((len(microservice._instances)-1) * 100)
+                total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
             except:
-                total =  (microservice._cpu_total * 100) / ((len(microservice._instances)) * 100)
+                total =  (microservice._cpu_total * 100) / ((microservice._count) * 100)
 
-            if total <= self._SCALE_DOWN and len(microservice._instances) > 2:
+            if total <= self._SCALE_DOWN and microservice._count > 2:
                 self.update_file(2)
                 return self.scale_down(2)
             else:
@@ -175,10 +178,10 @@ class Autoscaling:
         return False
     
     def scale_v2(self, microservice, proactive):
-        if proactive:
+        if proactive == True:
             if (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network_in > self._NETIN_UPPER_TRESHOLD and microservice._network_in_accuracy >= self._ACCURACY) or (microservice._network_out > self._NETOUT_UPPER_TRESHOLD and microservice._network_out_accuracy >= self._ACCURACY):
-                total =  (microservice._cpu_total * 100) / ((len(microservice._instances)+1) * 100) 
-                if total >= self._SCALE_UP:
+                total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100) 
+                if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("pro up")
                     print("PROATIVO")
                     return self.scale_up(2)
@@ -186,13 +189,13 @@ class Autoscaling:
                     self.update_file("pro up")
                     print("PROATIVO")
                     return self.scale_up(1)
-            elif len(microservice._instances) > 1 and (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network_in > self._NETIN_UPPER_TRESHOLD and microservice._network_in_accuracy >= self._ACCURACY) or (microservice._network_out > self._NETOUT_UPPER_TRESHOLD and microservice._network_out_accuracy >= self._ACCURACY):      
+            elif microservice._count > 1 and (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network_in > self._NETIN_UPPER_TRESHOLD and microservice._network_in_accuracy >= self._ACCURACY) or (microservice._network_out > self._NETOUT_UPPER_TRESHOLD and microservice._network_out_accuracy >= self._ACCURACY):      
                 try:
-                    total =  (microservice._cpu_total * 100) / ((len(microservice._instances)-1) * 100)
+                    total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
-                    total =  (microservice._cpu_total * 100) / ((len(microservice._instances)) * 100)
+                    total =  (microservice._cpu_total * 100) / ((microservice._count) * 100)
 
-                if total <= self._CPU_LOWER_TRESHOLD and len(microservice._instances) > 2:
+                if total <= self._CPU_LOWER_TRESHOLD and microservice._count > 2:
                     self.update_file(2)
                     print("PROATIVO")
                     self.update_file("pro down")
@@ -202,8 +205,8 @@ class Autoscaling:
                     self.update_file("pro down")
         else:
             if microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD or microservice._network_in > self._NETIN_UPPER_TRESHOLD or microservice._network_out > self._NETOUT_UPPER_TRESHOLD:
-                total =  (microservice._cpu_total * 100) / ((len(microservice._instances)+1) * 100) 
-                if total >= self._SCALE_UP:
+                total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100)
+                if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("rea up")
                     print("REATIVO")
                     return self.scale_up(2)
@@ -211,13 +214,13 @@ class Autoscaling:
                     self.update_file("rea up")
                     print("REATIVO")
                     return self.scale_up(1)
-            elif len(microservice._instances) > 1 and (microservice._cpu_utilization < self._CPU_LOWER_TRESHOLD or microservice._network_in < self._NETIN_LOWER_TRESHOLD or microservice._network_out < self._NETOUT_LOWER_TRESHOLD):      
+            elif microservice._count > 1 and (microservice._cpu_utilization < self._CPU_LOWER_TRESHOLD or microservice._network_in < self._NETIN_LOWER_TRESHOLD or microservice._network_out < self._NETOUT_LOWER_TRESHOLD):      
                 try:
-                    total =  (microservice._cpu_total * 100) / ((len(microservice._instances)-1) * 100)
+                    total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
-                    total =  (microservice._cpu_total * 100) / ((len(microservice._instances)) * 100)
+                    total =  (microservice._cpu_total * 100) / ((microservice._count) * 100)
 
-                if total <= self._CPU_LOWER_TRESHOLD and len(microservice._instances) > 2:
+                if total <= self._CPU_LOWER_TRESHOLD and microservice._count > 2:
                     self.update_file("rea down")
                     print("REATIVO")
                     return self.scale_down(2)
@@ -233,9 +236,9 @@ class Autoscaling:
         q2 = queue.Queue()
         q3 = queue.Queue()
 
-        t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 1, q1))
-        t2 = threading.Thread(target=self.arima_call, args=('netin', True, 1, q2))
-        t3 = threading.Thread(target=self.arima_call, args=('netout', True, 1, q3))
+        t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 3, q1))
+        t2 = threading.Thread(target=self.arima_call, args=('netin', True, 3, q2))
+        t3 = threading.Thread(target=self.arima_call, args=('netout', True, 3, q3))
     
         # starting thread
         t1.start()
@@ -279,7 +282,7 @@ class Autoscaling:
         microservice._network_out_accuracy = netout._accuracy
         
         #return self.scale(microservice)
-        return self.scale_v2(microservice, "PROATIVO")
+        return self.scale_v2(microservice, True)
 
         #se precisão de cpu e rede forem >= a 70% eo valor atual não for praticamente ZERO				
 	        #se o próximo valor é maior que antigo			
@@ -318,7 +321,7 @@ class Autoscaling:
 
     def reactive_scale(self, microservice):
         #if not self.scale(microservice):
-        if not self.scale_v2(microservice, "REATIVO"):
+        if not self.scale_v2(microservice, False):
             self.update_file(0)
             return False
         return True

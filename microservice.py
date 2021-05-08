@@ -10,6 +10,7 @@ class Microservice():
         self._cpu_accuracy = -1
         self._network_in_accuracy = -1
         self._network_out_accuracy = -1
+        self._count = 0
 
         self.set_all()
 
@@ -23,5 +24,6 @@ class Microservice():
                 self._network_out += float(instance.getNetworkOut())
                 self._packet_in += float(instance.getNetworkPacketsIn())
                 self._packet_out += float(instance.getNetworkPacketsOut())
-
+        
+        self._count = count
         self._cpu_utilization =  (self._cpu_total * 100) / (count * 100)
