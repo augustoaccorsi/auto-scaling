@@ -148,6 +148,15 @@ class App():
             worksheet.write('B1', 'value')
             workbook.close()
 
+        
+        if not os.path.isfile('dataset\\network.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\network.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'date', format)
+            worksheet.write('B1', 'value')
+            workbook.close()
+        '''
         if not os.path.isfile('dataset\\netin.xlsx'):
             workbook = xlsxwriter.Workbook('dataset\\netin.xlsx')
             worksheet = workbook.add_worksheet()
@@ -163,15 +172,15 @@ class App():
             worksheet.write('A1', 'date', format)
             worksheet.write('B1', 'value')
             workbook.close()
-        
+        '''
         if not os.path.isfile('dataset\\all.xlsx'):
             workbook = xlsxwriter.Workbook('dataset\\all.xlsx')
             worksheet = workbook.add_worksheet()
             format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
             worksheet.write('A1', 'date', format)
             worksheet.write('B1', 'cpu')
-            worksheet.write('C1', 'netin')
-            worksheet.write('D1', 'netout')
+            worksheet.write('C1', 'network')
+            #worksheet.write('D1', 'netout')
             worksheet.write('E1', 'scale')
             worksheet.write('F1', '')
             worksheet.write('G1', 'up_cpu')
@@ -211,6 +220,20 @@ class App():
         workbook.save(filename = 'dataset\\cpu.xlsx')
         workbook.close()
 
+
+        workbook = load_workbook(filename = 'dataset\\network.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=datetime)
+        if microservice._network != None:
+            worksheet.cell(column=2,row=newRowLocation, value=microservice._network)
+
+        workbook.save(filename = 'dataset\\network.xlsx')
+        workbook.close()
+
+        '''
         workbook = load_workbook(filename = 'dataset\\netin.xlsx')
         worksheet = workbook['Sheet1']
         
@@ -234,7 +257,7 @@ class App():
 
         workbook.save(filename = 'dataset\\netout.xlsx')
         workbook.close()
-
+        '''
         workbook = load_workbook(filename = 'dataset\\all.xlsx')
         worksheet = workbook['Sheet1']
         
@@ -280,9 +303,9 @@ class App():
 
                 count+=1
             
-                cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
-                networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
-                networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Maximum")
+                cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Average")
+                networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Average")
+                networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Average")
                         
                 state = self._ec2.describe_instances(InstanceIds=[instance.getInstanceId()])
                 instance.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
@@ -297,25 +320,31 @@ class App():
                 print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
         
                 try:
-                    cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
+                    cpuUtilization = round(float(cpu['Datapoints'][0]['Average']),4)
                     print("CPU Usage: "+str(cpuUtilization)+"%")
                     instance.setCpuUtilization(cpuUtilization)
                 except:
                     cpuUtilization = None
                 
                 try:
-                    netIn = str(float(networkIn['Datapoints'][0]['Maximum'])/1000) # valor em kB
-                    print("Network In: "+netIn+"Kb")
+                    netIn = str(float(networkIn['Datapoints'][0]['Average'])/1000) # valor em kB
+                    #print("Network In: "+netIn+"Kb")
                     instance.setNetworkIn(netIn)
                 except:
                     netIn = None
                 
                 try:
-                    netOut = str(float(networkOut['Datapoints'][0]['Maximum'])/1000) # valor em kB
-                    print("Network Out: "+netOut+"Kb")
+                    netOut = str(float(networkOut['Datapoints'][0]['Average'])/1000) # valor em kB
+                    #print("Network Out: "+netOut+"Kb")
                     instance.setNetworkOut(netOut)
                 except:
                     netOut = None
+                try:
+                    network = float(instance.getNetworkOut()) + float(instance.getNetworkOut())
+                    print("Network: "+str(network)+"Kb")
+                    instance.setNetwork(network)
+                except:
+                    network = None
 
                 print()
 
@@ -326,12 +355,11 @@ class App():
             print("----")
             print("Total CPU: "+ str(microservice._cpu_total))
             print("Utilization: "+str(microservice._cpu_utilization))
-            print("Total Network In: "+ str(microservice._network_in))
-            print("Total Network Out: "+ str(microservice._network_out))
+            print("Network: "+ str(microservice._network))
             print("----")
             print()
 
-            if microservice._cpu_total > 0 and microservice._cpu_utilization > 0 and microservice._network_in > 0 and microservice._network_out:
+            if microservice._cpu_total > 0 and microservice._cpu_utilization > 0 and microservice._network > 0:
                 self.save_into_file(end_time, microservice)
             
                 autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
@@ -364,4 +392,5 @@ if __name__ == '__main__':
         if sys.argv[1] == "down":
             app.scale_down()
     except:
+        app.create_files()
         app.read_instances()

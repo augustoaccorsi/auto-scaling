@@ -23,19 +23,14 @@ class Autoscaling:
         self._CPU_UPPER_TRESHOLD = None
         self._CPU_LOWER_TRESHOLD = None
 
-        self._NETIN_UPPER_TRESHOLD = None
-        self._NETIN_LOWER_TRESHOLD = None
-
-        self._NETOUT_UPPER_TRESHOLD = None
-        self._NETOUT_LOWER_TRESHOLD = None
+        self._NETWORK_UPPER_TRESHOLD = None
+        self._NETWORK_LOWER_TRESHOLD = None
         
         self._cooldown = False
         
         self.set_thresholds()
         
     def calculate_threasholds(self, values):
-
-        
         upper =  np.percentile(np.sort(values), 90)
         lower = statistics.median(np.sort(values))
 
@@ -71,12 +66,15 @@ class Autoscaling:
 
     def set_thresholds(self):
         self._CPU_UPPER_TRESHOLD, self._CPU_LOWER_TRESHOLD = self.get_dataset_data('cpu')
-        self._NETIN_UPPER_TRESHOLD, self._NETIN_LOWER_TRESHOLD =  self.get_dataset_data('netin')
-        self._NETOUT_UPPER_TRESHOLD, self._NETOUT_LOWER_TRESHOLD = self.get_dataset_data('netout')
+        self._NETWORK_UPPER_TRESHOLD, self._NETWORK_LOWER_TRESHOLD =  self.get_dataset_data('network')
 
+        '''
+        if self._CPU_LOWER_TRESHOLD < 30:
+            self._CPU_LOWER_TRESHOLD  = 30
+        '''
+        
         print("CPU: "+str(self._CPU_UPPER_TRESHOLD)+" / "+str(self._CPU_LOWER_TRESHOLD))
-        print("IN:  "+str(self._NETIN_UPPER_TRESHOLD)+" / "+str(self._NETIN_LOWER_TRESHOLD))
-        print("OUT: "+str(self._NETOUT_UPPER_TRESHOLD)+" / "+str(self._NETOUT_LOWER_TRESHOLD))
+        print("NET:  "+str(self._NETWORK_UPPER_TRESHOLD)+" / "+str(self._NETWORK_LOWER_TRESHOLD))
     
     def scale_up(self, instancesUp):
         #self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
@@ -104,16 +102,14 @@ class Autoscaling:
         workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
 
-    def save_file(self, cpu, netin, netout):
+    def save_file(self, cpu, network):
         workbook = load_workbook(filename = 'dataset\\all.xlsx')
         worksheet = workbook['Sheet1']        
         
         worksheet.cell(column=7,row=worksheet.max_row, value=str(self._CPU_UPPER_TRESHOLD))        
         worksheet.cell(column=8,row=worksheet.max_row, value=str(self._CPU_LOWER_TRESHOLD))        
-        worksheet.cell(column=9,row=worksheet.max_row, value=str(self._NETIN_UPPER_TRESHOLD))       
-        worksheet.cell(column=10,row=worksheet.max_row, value=str(self._NETIN_LOWER_TRESHOLD))        
-        worksheet.cell(column=11,row=worksheet.max_row, value=str(self._NETOUT_UPPER_TRESHOLD))        
-        worksheet.cell(column=12,row=worksheet.max_row, value=str(self._NETOUT_LOWER_TRESHOLD))
+        worksheet.cell(column=9,row=worksheet.max_row, value=str(self._NETWORK_UPPER_TRESHOLD))       
+        worksheet.cell(column=10,row=worksheet.max_row, value=str(self._NETWORK_LOWER_TRESHOLD))     
 
         worksheet.cell(column=13,row=worksheet.max_row, value=cpu._arima_order)
         try:
@@ -124,26 +120,16 @@ class Autoscaling:
             worksheet.cell(column=14,row=worksheet.max_row, value=str(0))
             worksheet.cell(column=15,row=worksheet.max_row, value=str(0))
             worksheet.cell(column=16,row=worksheet.max_row, value=str(0))
-        worksheet.cell(column=17,row=worksheet.max_row, value=netin._accuracy)
-        worksheet.cell(column=18,row=worksheet.max_row, value=netin._arima_order)
+        worksheet.cell(column=17,row=worksheet.max_row, value=network._accuracy)
+        worksheet.cell(column=18,row=worksheet.max_row, value=network._arima_order)
         try:
-            worksheet.cell(column=19,row=worksheet.max_row, value=str(netin._forecast[0]))
-            worksheet.cell(column=20,row=worksheet.max_row, value=str(netin._forecast[1]))
-            worksheet.cell(column=21,row=worksheet.max_row, value=str(netin._forecast[2]))
+            worksheet.cell(column=19,row=worksheet.max_row, value=str(network._forecast[0]))
+            worksheet.cell(column=20,row=worksheet.max_row, value=str(network._forecast[1]))
+            worksheet.cell(column=21,row=worksheet.max_row, value=str(network._forecast[2]))
         except:
             worksheet.cell(column=19,row=worksheet.max_row, value=str(0))
             worksheet.cell(column=20,row=worksheet.max_row, value=str(0))
             worksheet.cell(column=21,row=worksheet.max_row, value=str(0))
-        worksheet.cell(column=22,row=worksheet.max_row, value=netout._accuracy)
-        worksheet.cell(column=23,row=worksheet.max_row, value=netout._arima_order)
-        try:
-            worksheet.cell(column=24,row=worksheet.max_row, value=str(netout._forecast[0]))
-            worksheet.cell(column=25,row=worksheet.max_row, value=str(netout._forecast[1]))
-            worksheet.cell(column=26,row=worksheet.max_row, value=str(netout._forecast[2]))
-        except:
-            worksheet.cell(column=24,row=worksheet.max_row, value=str(0))
-            worksheet.cell(column=25,row=worksheet.max_row, value=str(0))
-            worksheet.cell(column=26,row=worksheet.max_row, value=str(0))
 
         workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
@@ -179,7 +165,7 @@ class Autoscaling:
     
     def scale_v2(self, microservice, proactive):
         if proactive == True:
-            if (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network_in > self._NETIN_UPPER_TRESHOLD and microservice._network_in_accuracy >= self._ACCURACY) or (microservice._network_out > self._NETOUT_UPPER_TRESHOLD and microservice._network_out_accuracy >= self._ACCURACY):
+            if (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network > self._NETWORK_UPPER_TRESHOLD and microservice._network_accuracy >= self._ACCURACY):
                 total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100) 
                 if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("pro up")
@@ -189,7 +175,7 @@ class Autoscaling:
                     self.update_file("pro up")
                     print("PROATIVO")
                     return self.scale_up(1)
-            elif microservice._count > 1 and (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network_in > self._NETIN_UPPER_TRESHOLD and microservice._network_in_accuracy >= self._ACCURACY) or (microservice._network_out > self._NETOUT_UPPER_TRESHOLD and microservice._network_out_accuracy >= self._ACCURACY):      
+            elif microservice._count > 1 and (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network > self._NETWORK_UPPER_TRESHOLD and microservice._network_accuracy >= self._ACCURACY):      
                 try:
                     total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
@@ -204,7 +190,7 @@ class Autoscaling:
                     print("PROATIVO")
                     self.update_file("pro down")
         else:
-            if microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD or microservice._network_in > self._NETIN_UPPER_TRESHOLD or microservice._network_out > self._NETOUT_UPPER_TRESHOLD:
+            if microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD or microservice._network > self._NETWORK_UPPER_TRESHOLD:
                 total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100)
                 if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("rea up")
@@ -214,7 +200,7 @@ class Autoscaling:
                     self.update_file("rea up")
                     print("REATIVO")
                     return self.scale_up(1)
-            elif microservice._count > 1 and (microservice._cpu_utilization < self._CPU_LOWER_TRESHOLD or microservice._network_in < self._NETIN_LOWER_TRESHOLD or microservice._network_out < self._NETOUT_LOWER_TRESHOLD):      
+            elif microservice._count > 1 and (microservice._cpu_utilization < self._CPU_LOWER_TRESHOLD or microservice._network < self._NETWORK_LOWER_TRESHOLD):      
                 try:
                     total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
@@ -234,23 +220,19 @@ class Autoscaling:
     def arima(self):
         q1 = queue.Queue()
         q2 = queue.Queue()
-        q3 = queue.Queue()
 
         t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 3, q1))
-        t2 = threading.Thread(target=self.arima_call, args=('netin', True, 3, q2))
-        t3 = threading.Thread(target=self.arima_call, args=('netout', True, 3, q3))
+        t2 = threading.Thread(target=self.arima_call, args=('network', True, 3, q2))
     
         # starting thread
         t1.start()
         t2.start()
-        t3.start()
     
         # wait until thread is completely executed
         t1.join()
         t2.join()
-        t3.join() 
   
-        return q1.get(), q2.get(), q3.get()
+        return q1.get(), q2.get()
 
     def proactive_scale(self, microservice):
         # creating thread
@@ -258,28 +240,23 @@ class Autoscaling:
 
         now = datetime.datetime.now()
 
-        cpu, netin, netout = self.arima()
+        cpu, network = self.arima()
 
         now = datetime.datetime.now() - now
 
-        self.save_file(cpu, netin, netout)
+        self.save_file(cpu, network)
 
         try:
             microservice._cpu_utilization = cpu._forecast[0]
         except:
             pass
         try:
-            microservice._network_in = netin._forecast[0]
-        except:
-            pass
-        try:
-            microservice._network_out = netout._forecast[0]
+            microservice._network = network._forecast[0]
         except:
             pass
 
         microservice._cpu_accuracy = cpu._accuracy
-        microservice._network_in_accuracy = netin._accuracy
-        microservice._network_out_accuracy = netout._accuracy
+        microservice._network_accuracy = network._accuracy
         
         #return self.scale(microservice)
         return self.scale_v2(microservice, True)
@@ -292,7 +269,7 @@ class Autoscaling:
         '''
         try:
             cpu_count = 0
-            netin_count = 0
+            NETWORK_count = 0
             netout_count = 0
 
             # crescimento de CPU é diretamente proporcional ao crescimento de Rede
@@ -304,12 +281,12 @@ class Autoscaling:
                 if abs(float(cpu._forecast[0])-float(microservice._cpu_total)) >= self._PROACTIVE_DIFF:
                     cpu_count +=1
                 if abs(float(netin._forecast[0])-float(microservice._network_in)) >= self._PROACTIVE_DIFF:
-                    netin_count +=1
+                    NETWORK_count +=1
                 if abs(float(netout._forecast[0])-float(microservice._network_out)) >= self._PROACTIVE_DIFF:
                     netout_count +=1
             
             if float(cpu._accuracy) >= self._ACCURACY or float(netin._accuracy) >= self._ACCURACY or float(netout._accuracy) >= self._ACCURACY:
-                if cpu_count > 0 or netin_count > 0 or netout_count > 0:
+                if cpu_count > 0 or NETWORK_count > 0 or netout_count > 0:
                     print("PROATIVO")
                     return self.scale(microservice)
         except Exception as e:

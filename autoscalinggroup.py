@@ -167,14 +167,15 @@ class Instance:
         self._launchConfigurationName = ""
         self._protectedFromScaleIn = ""
         self._cpuUtilization = 0.0
-        self._networkIn = ""
-        self._networkOut = ""
+        self._networkIn = 0.0
+        self._networkOut = 0.0
         self._networkPacketsIn = 0.0
         self._networkPacketsOut = 0.0
         self._triggerUp = 0
         self._triggerDown = 0
         self._launchTime = ""
         self._status = ""
+        self._network = 0.0
 
     def setInstanceId(self,instanceId):
         self._instanceId = instanceId
@@ -223,6 +224,9 @@ class Instance:
     
     def setNetworkIn(self, networkIn):
         self._networkIn = networkIn
+        
+    def setNetwork(self, network):
+        self._network = network
     
     def setNetworkOut(self, networkOut):
         self._networkOut = networkOut
@@ -238,6 +242,9 @@ class Instance:
     
     def getNetworkIn(self):
         return self._networkIn
+    
+    def getNetwork(self):
+        return self._network
     
     def getNetworkOut(self):
         return self._networkOut
