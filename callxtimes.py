@@ -36,7 +36,7 @@ class Run:
         count = 0
         
         print("sleeping for 8 minutes")
-        await asyncio.sleep(8*60)
+        await asyncio.sleep(3*60)
         print("woke up")
 
         while True:

@@ -25,6 +25,12 @@ class Autoscaling:
 
         self._NETWORK_UPPER_TRESHOLD = None
         self._NETWORK_LOWER_TRESHOLD = None
+
+        self._CPU_UPPER_TRESHOLD_2 = None
+        self._CPU_LOWER_TRESHOLD_2 = None
+
+        self._NETWORK_UPPER_TRESHOLD_2 = None
+        self._NETWORK_LOWER_TRESHOLD_2 = None
         
         self._cooldown = False
         
@@ -65,26 +71,28 @@ class Autoscaling:
         return self.calculate_threasholds(values) 
 
     def set_thresholds(self):
-        self._CPU_UPPER_TRESHOLD, self._CPU_LOWER_TRESHOLD = self.get_dataset_data('cpu')
-        self._NETWORK_UPPER_TRESHOLD, self._NETWORK_LOWER_TRESHOLD =  self.get_dataset_data('network')
+        self._CPU_UPPER_TRESHOLD_2, self._CPU_LOWER_TRESHOLD_2 = self.get_dataset_data('cpu')
+        self._NETWORK_UPPER_TRESHOLD_2, self._NETWORK_LOWER_TRESHOLD_2 =  self.get_dataset_data('network')
 
-        '''
-        if self._CPU_LOWER_TRESHOLD < 30:
+        print("CPU: "+str(self._CPU_UPPER_TRESHOLD_2)+" / "+str(self._CPU_LOWER_TRESHOLD_2))
+        print("NET:  "+str(self._NETWORK_UPPER_TRESHOLD_2)+" / "+str(self._NETWORK_LOWER_TRESHOLD))
+
+        if True:
             self._CPU_LOWER_TRESHOLD  = 30
-        '''
-        
-        print("CPU: "+str(self._CPU_UPPER_TRESHOLD)+" / "+str(self._CPU_LOWER_TRESHOLD))
-        print("NET:  "+str(self._NETWORK_UPPER_TRESHOLD)+" / "+str(self._NETWORK_LOWER_TRESHOLD))
+            self._CPU_UPPER_TRESHOLD = 70
+            self._NETWORK_UPPER_TRESHOLD = 999999
+            self._NETWORK_LOWER_TRESHOLD = -1
+
     
     def scale_up(self, instancesUp):
-        #self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
+        self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
         print("Autoscaling Group scalled up, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
-        #self._cooldown = True
+        self._cooldown = True
         return True
 
     def scale_down(self, instancesDown):
         if self._auto_scaling_group.getDesiredCapacity() > 1:
-            #self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - instancesDown))
+            self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() - instancesDown))
             print("Autoscaling Group scalled down, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() - instancesDown)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() - instancesDown))
             #self._cooldown = True
             return True
@@ -106,10 +114,10 @@ class Autoscaling:
         workbook = load_workbook(filename = 'dataset\\all.xlsx')
         worksheet = workbook['Sheet1']        
         
-        worksheet.cell(column=7,row=worksheet.max_row, value=str(self._CPU_UPPER_TRESHOLD))        
-        worksheet.cell(column=8,row=worksheet.max_row, value=str(self._CPU_LOWER_TRESHOLD))        
-        worksheet.cell(column=9,row=worksheet.max_row, value=str(self._NETWORK_UPPER_TRESHOLD))       
-        worksheet.cell(column=10,row=worksheet.max_row, value=str(self._NETWORK_LOWER_TRESHOLD))     
+        worksheet.cell(column=7,row=worksheet.max_row, value=str(self._CPU_UPPER_TRESHOLD_2))        
+        worksheet.cell(column=8,row=worksheet.max_row, value=str(self._CPU_LOWER_TRESHOLD_2))        
+        worksheet.cell(column=9,row=worksheet.max_row, value=str(self._NETWORK_UPPER_TRESHOLD_2))       
+        worksheet.cell(column=10,row=worksheet.max_row, value=str(self._NETWORK_LOWER_TRESHOLD_2))     
 
         worksheet.cell(column=13,row=worksheet.max_row, value=cpu._arima_order)
         try:

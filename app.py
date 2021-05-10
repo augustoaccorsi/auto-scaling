@@ -266,10 +266,8 @@ class App():
         worksheet.cell(column=1,row=newRowLocation, value=datetime)
         if microservice._cpu_utilization != None:
             worksheet.cell(column=2,row=newRowLocation, value=microservice._cpu_utilization)
-        if microservice._network_in != None:
-            worksheet.cell(column=3,row=newRowLocation, value=microservice._network_in)
-        if microservice._network_out != None:
-            worksheet.cell(column=4,row=newRowLocation, value=microservice._network_out)
+        if microservice._network != None:
+            worksheet.cell(column=3,row=newRowLocation, value=microservice._network)
 
         workbook.save(filename = 'dataset\\all.xlsx')
         workbook.close()
