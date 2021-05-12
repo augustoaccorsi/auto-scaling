@@ -365,8 +365,8 @@ class App():
                 autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
                 
                 if not autoscaling.execute(self._microservice):
-                    self.microservice._scale_up_trigger = 0
-                    self.microservice._scale_down_trigger = 0
+                    self._microservice._scale_up_trigger = 0
+                    self._microservice._scale_down_trigger = 0
             
                 self._cooldown = autoscaling._cooldown
         else:
