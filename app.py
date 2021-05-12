@@ -39,6 +39,8 @@ class App():
         self._cooldown_trigger = 0
         self._timeseries = False
 
+        self._microservice = Microservice(self._instances)
+
         self.describe()
         
         return weakref.proxy(self)
@@ -348,20 +350,23 @@ class App():
 
         if self._cooldown == False:
             
-            microservice = Microservice(self._instances)
+            self._microservice.set_all(self._instances)
             
             print("----")
-            print("Total CPU: "+ str(microservice._cpu_total))
-            print("Utilization: "+str(microservice._cpu_utilization))
-            print("Network: "+ str(microservice._network))
+            print("Total CPU: "+ str(self._microservice._cpu_total))
+            print("Utilization: "+str(self._microservice._cpu_utilization))
+            print("Network: "+ str(self._microservice._network))
             print("----")
             print()
 
-            if microservice._cpu_total > 0 and microservice._cpu_utilization > 0 and microservice._network > 0:
-                self.save_into_file(end_time, microservice)
+            if self._microservice._cpu_total > 0 and self._microservice._cpu_utilization > 0 and self._microservice._network > 0:
+                self.save_into_file(end_time, self._microservice)
             
                 autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
-                autoscaling.execute(microservice)
+                
+                if not autoscaling.execute(self._microservice):
+                    self.microservice._scale_up_trigger = 0
+                    self.microservice._scale_down_trigger = 0
             
                 self._cooldown = autoscaling._cooldown
         else:

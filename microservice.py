@@ -11,10 +11,27 @@ class Microservice():
         self._network_accuracy = -1
         self._network = 0
         self._count = 0
+        
+        self._scale_up_trigger= 0
+        self._scale_down_trigger= 0
 
-        self.set_all()
+        #self.set_all()
 
-    def set_all(self):
+    def clear(self):
+        self._cpu_total = 0
+        self._cpu_utilization = 0
+        self._network_in = 0
+        self._network_out = 0
+        self._packet_in = 0
+        self._packet_out = 0
+        self._cpu_accuracy = -1
+        self._network_accuracy = -1
+        self._network = 0
+        self._count = 0
+
+    def set_all(self, instances):
+        self._instances = instances
+        self.clear()
         count = 0
         for instance in self._instances:
             if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService":
