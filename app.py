@@ -158,54 +158,47 @@ class App():
             worksheet.write('A1', 'date', format)
             worksheet.write('B1', 'value')
             workbook.close()
-        '''
-        if not os.path.isfile('dataset\\netin.xlsx'):
-            workbook = xlsxwriter.Workbook('dataset\\netin.xlsx')
-            worksheet = workbook.add_worksheet()
-            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
-            worksheet.write('A1', 'date', format)
-            worksheet.write('B1', 'value')
-            workbook.close()
 
-        if not os.path.isfile('dataset\\netout.xlsx'):
-            workbook = xlsxwriter.Workbook('dataset\\netout.xlsx')
-            worksheet = workbook.add_worksheet()
-            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
-            worksheet.write('A1', 'date', format)
-            worksheet.write('B1', 'value')
-            workbook.close()
-        '''
         if not os.path.isfile('dataset\\all.xlsx'):
             workbook = xlsxwriter.Workbook('dataset\\all.xlsx')
             worksheet = workbook.add_worksheet()
             format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
-            worksheet.write('A1', 'date', format)
-            worksheet.write('B1', 'cpu')
-            worksheet.write('C1', 'network')
-            #worksheet.write('D1', 'netout')
-            worksheet.write('E1', 'scale')
-            worksheet.write('F1', '')
-            worksheet.write('G1', 'up_cpu')
-            worksheet.write('H1', 'down_cpu')
-            worksheet.write('I1', 'up_netin')
-            worksheet.write('J1', 'down_netin')
-            worksheet.write('K1', 'up_netout')
-            worksheet.write('L1', 'down_netout')
-            worksheet.write('M1', 'cpu_acc')
-            worksheet.write('N1', 'cpu_model')
-            worksheet.write('O1', 'cpu_pred1')
-            worksheet.write('P1', 'cpu_pred2')
-            worksheet.write('R1', 'cpu_pred3')
-            worksheet.write('S1', 'netin_acc')
-            worksheet.write('T1', 'netin_model')
-            worksheet.write('U1', 'netin_pred1')
-            worksheet.write('V1', 'netin_pred2')
-            worksheet.write('W1', 'netin_pred3')
-            worksheet.write('X1', 'netout_acc')
-            worksheet.write('Y1', 'netout_model')
-            worksheet.write('Z1', 'netout_pred1')
-            worksheet.write('AA1', 'netout_pred2')
-            worksheet.write('BB1', 'netout_pred3')
+            worksheet.write('A1', 'date', format) #1
+            worksheet.write('B1', 'cpu') #2 
+            worksheet.write('C1', 'net') #3
+            worksheet.write('D1', 'scale') #4
+
+            worksheet.write('E1', 'up_cpu') #5
+            worksheet.write('F1', 'down_cpu') #6
+            worksheet.write('G1', 'net_up') #7
+            worksheet.write('H1', 'net_down') #8
+
+            worksheet.write('I1', 'cpu_arima') #9           
+            worksheet.write('J1', 'cpu_acc') #10
+            worksheet.write('K1', 'cpu_pred') #11
+            worksheet.write('L1', 'net_arima') #12        
+            worksheet.write('M1', 'net_acc') #13
+            worksheet.write('N1', 'net_pred') #14
+
+            worksheet.write('O1', 'cpu_mape') #15
+            worksheet.write('P1', 'cpu_me') #16
+            worksheet.write('Q1', 'cpu_mae') #17
+            worksheet.write('R1', 'cpu_mpe') #18
+            worksheet.write('S1', 'cpu_rmse') #19
+            worksheet.write('T1', 'cpu_corr') #20
+            worksheet.write('U1', 'cpu_minmax') #21
+            worksheet.write('V1', 'cpu_acf1') #22
+            
+            worksheet.write('W1', 'net_mape') #23
+            worksheet.write('X1', 'net_me') #24
+            worksheet.write('Y1', 'net_mae') #25
+            worksheet.write('Z1', 'net_mpe') #26
+            worksheet.write('AA1', 'net_rmse') #27
+            worksheet.write('AB1', 'net_corr') #28
+            worksheet.write('AC1', 'net_minmax') #29
+            worksheet.write('AD1', 'net_acf1') #30
+            worksheet.write('AE1', 'instancias') #31
+
             workbook.close()
 
     def save_into_file(self, datetime, microservice):
@@ -235,31 +228,6 @@ class App():
         workbook.save(filename = 'dataset\\network.xlsx')
         workbook.close()
 
-        '''
-        workbook = load_workbook(filename = 'dataset\\netin.xlsx')
-        worksheet = workbook['Sheet1']
-        
-        newRowLocation = worksheet.max_row +1
-
-        worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if microservice._network_in != None:
-            worksheet.cell(column=2,row=newRowLocation, value=microservice._network_in)
-
-        workbook.save(filename = 'dataset\\netin.xlsx')
-        workbook.close()
-
-        workbook = load_workbook(filename = 'dataset\\netout.xlsx')
-        worksheet = workbook['Sheet1']
-        
-        newRowLocation = worksheet.max_row +1
-
-        worksheet.cell(column=1,row=newRowLocation, value=datetime)
-        if microservice._network_out != None:
-            worksheet.cell(column=2,row=newRowLocation, value=microservice._network_out)
-
-        workbook.save(filename = 'dataset\\netout.xlsx')
-        workbook.close()
-        '''
         workbook = load_workbook(filename = 'dataset\\all.xlsx')
         worksheet = workbook['Sheet1']
         

@@ -159,8 +159,10 @@ class Timeseries:
     def print_data(self):
         print("Dataset: "+self._path)
         print("Accuracy: "+str(self._accuracy))
-        #print("MAPE: "+str(self._mape))
-        #print("MAE: "+str(self._mae))
+        print("MAE: "+str(self._mae))
+        print("RMSE: "+str(self._rmse))
+        #print("RMSSE: ")
+        print("MAPE: "+str(self._mape))
         #print("Forecast Values: "+str(self._forecast[0]))
         print("Forecast Values: "+str(self._forecast))
        # print("ARIMA: "+self._arima_order)

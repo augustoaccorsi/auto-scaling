@@ -11,7 +11,7 @@ class Microservice():
         self._network_accuracy = -1
         self._network = 0
         self._count = 0
-        
+
         self._scale_up_trigger= 0
         self._scale_down_trigger= 0
 
@@ -45,4 +45,7 @@ class Microservice():
                 self._network += float(instance.getNetwork())
         
         self._count = count
-        self._cpu_utilization =  (self._cpu_total * 100) / (count * 100)
+        try:
+            self._cpu_utilization =  (self._cpu_total * 100) / (count * 100)
+        except:
+            pass
