@@ -142,8 +142,8 @@ class App():
         self.create_files()
 
     def create_files(self):
-        if not os.path.isfile('dataset\\cpu.xlsx'):
-            workbook = xlsxwriter.Workbook('dataset\\cpu.xlsx')
+        if not os.path.isfile('dataset\\'+self._autoscalinggroup+'\\cpu.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\'+self._autoscalinggroup+'\\cpu.xlsx')
             worksheet = workbook.add_worksheet()
             format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
             worksheet.write('A1', 'date', format)
@@ -151,16 +151,16 @@ class App():
             workbook.close()
 
         
-        if not os.path.isfile('dataset\\network.xlsx'):
-            workbook = xlsxwriter.Workbook('dataset\\network.xlsx')
+        if not os.path.isfile('dataset\\'+self._autoscalinggroup+'\\network.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\'+self._autoscalinggroup+'\\network.xlsx')
             worksheet = workbook.add_worksheet()
             format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
             worksheet.write('A1', 'date', format)
             worksheet.write('B1', 'value')
             workbook.close()
 
-        if not os.path.isfile('dataset\\all.xlsx'):
-            workbook = xlsxwriter.Workbook('dataset\\all.xlsx')
+        if not os.path.isfile('dataset\\'+self._autoscalinggroup+'\\all.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\'+self._autoscalinggroup+'\\all.xlsx')
             worksheet = workbook.add_worksheet()
             format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
             worksheet.write('A1', 'date', format) #1
@@ -203,7 +203,7 @@ class App():
 
     def save_into_file(self, datetime, microservice):
 
-        workbook = load_workbook(filename = 'dataset\\cpu.xlsx')
+        workbook = load_workbook(filename = 'dataset\\'+self._autoscalinggroup+'\\cpu.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
@@ -212,11 +212,11 @@ class App():
         if microservice._cpu_utilization != None:
             worksheet.cell(column=2,row=newRowLocation, value=microservice._cpu_utilization)
 
-        workbook.save(filename = 'dataset\\cpu.xlsx')
+        workbook.save(filename = 'dataset\\'+self._autoscalinggroup+'\\cpu.xlsx')
         workbook.close()
 
 
-        workbook = load_workbook(filename = 'dataset\\network.xlsx')
+        workbook = load_workbook(filename = 'dataset\\'+self._autoscalinggroup+'\\network.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
@@ -225,10 +225,10 @@ class App():
         if microservice._network != None:
             worksheet.cell(column=2,row=newRowLocation, value=microservice._network)
 
-        workbook.save(filename = 'dataset\\network.xlsx')
+        workbook.save(filename = 'dataset\\'+self._autoscalinggroup+'\\network.xlsx')
         workbook.close()
 
-        workbook = load_workbook(filename = 'dataset\\all.xlsx')
+        workbook = load_workbook(filename = 'dataset\\'+self._autoscalinggroup+'\\all.xlsx')
         worksheet = workbook['Sheet1']
         
         newRowLocation = worksheet.max_row +1
@@ -239,7 +239,7 @@ class App():
         if microservice._network != None:
             worksheet.cell(column=3,row=newRowLocation, value=microservice._network)
 
-        workbook.save(filename = 'dataset\\all.xlsx')
+        workbook.save(filename = 'dataset\\'+self._autoscalinggroup+'\\all.xlsx')
         workbook.close()
 
     def get_metric(self, metric, instance, start_time, end_time, statistics):

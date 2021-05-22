@@ -1,6 +1,6 @@
 import asyncio, datetime, sys
 from app import App
-import weakref
+import sys
 
 auto_scaling_group = "os.environ['AUTO_SCALING_GROUP']"
 region = "os.environ['REGION']"
@@ -14,12 +14,8 @@ class Run:
     def __init__(self):        
         #self._app = App(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
         self._app = App("engine-asg", "sa-east-1")
-        self._localApp = App("engine-asg", "sa-east-1")
+        self._localApp = App(sys.argv[1], "sa-east-1")
         self._localApp.describe()
-
-    def revew_local(self):
-        self._localApp.commit_suicide()
-        self._localApp = App("engine-asg", "sa-east-1")
 
     async def auto_scaling_check(self):
         count = 0
@@ -37,7 +33,7 @@ class Run:
         while True:
             start = datetime.datetime.now()
             count +=1
-            print("Executing Analysis "+str(count)+" on Auto Scaling Group "+"engine-asg"+" at "+datetime.datetime.utcnow().strftime('%m/%d/%Y %H:%M:%S'))
+            print("Executing Analysis "+str(count)+" on Auto Scaling Group "+sys.argv[1]+" at "+datetime.datetime.utcnow().strftime('%m/%d/%Y %H:%M:%S'))
             print()
             self._localApp.read_instances()
             end = datetime.datetime.now() - start

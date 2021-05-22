@@ -29,7 +29,7 @@ class Run:
         path = path.replace("&3", z)
         res = session.post(self._url+path) 
         print("Call " + str(count+1) + " on "+path+" on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
-        return res.status_code
+        return res.status_code  
         
     async def call_url(self, type):
         #await asyncio.sleep(600)

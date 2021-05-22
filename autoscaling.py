@@ -15,6 +15,8 @@ class Autoscaling:
         self._autoScalingClient = autoScalingClient
         self._terminated = [] 
 
+        print(self._auto_scaling_group)
+
         self._PROACTIVE_DIFF = 45
         self._ACCURACY = 70
         self._SCALE_UP = 70
@@ -46,9 +48,9 @@ class Autoscaling:
         return upper, lower
 
     def get_dataset_data(self, dataset):
-        data_xls = pd.read_excel('dataset\\'+dataset+'.xlsx', 'Sheet1', dtype=str, index_col=None)
-        data_xls.to_csv('dataset\\'+dataset+'.csv', encoding='utf-8', index=False) 
-        df=pd.read_csv('dataset\\'+dataset+'.csv')
+        data_xls = pd.read_excel('dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\'+dataset+'.xlsx', 'Sheet1', dtype=str, index_col=None)
+        data_xls.to_csv('dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\'+dataset+'.csv', encoding='utf-8', index=False) 
+        df=pd.read_csv('dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\'+dataset+'.csv')
 
         date, value = df.date.to_list(), df.value.to_list()
         
@@ -112,14 +114,14 @@ class Autoscaling:
         queue.put(timeseries)
     
     def update_file(self, scale):        
-        workbook = load_workbook(filename = 'dataset\\all.xlsx')
+        workbook = load_workbook(filename = 'dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\all.xlsx')
         worksheet = workbook['Sheet1']
         worksheet.cell(column=5,row=worksheet.max_row, value=scale)
-        workbook.save(filename = 'dataset\\all.xlsx')
+        workbook.save(filename = 'dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\all.xlsx')
         workbook.close()
 
     def save_file(self, cpu, network):
-        workbook = load_workbook(filename = 'dataset\\all.xlsx')
+        workbook = load_workbook(filename = 'dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\all.xlsx')
         worksheet = workbook['Sheet1']        
         
         worksheet.cell(column=5,row=worksheet.max_row, value=str(self._CPU_UPPER_TRESHOLD))        
@@ -166,7 +168,7 @@ class Autoscaling:
 
 
 
-        workbook.save(filename = 'dataset\\all.xlsx')
+        workbook.save(filename = 'dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\all.xlsx')
         workbook.close()
 
     def scale(self, microservice):
