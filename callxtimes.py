@@ -10,7 +10,7 @@ import time
 class Run:
 
     def __init__(self):        
-        self._url = "http://augusto-accorsi-engine-elb-1884692720.sa-east-1.elb.amazonaws.com:5000/"
+        self._url = "http://augusto-accorsi-webapp-elb-1925434936.sa-east-1.elb.amazonaws.com:3001/"
         self._path = "engine/mand?max_iter=&1&width=&2&height=&3"
 
     def call_request_get(self, count):
@@ -29,7 +29,15 @@ class Run:
         path = path.replace("&3", z)
         res = session.post(self._url+path) 
         print("Call " + str(count+1) + " on "+path+" on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
-        return res.status_code  
+        return res.status_code
+
+    def call_database(self, count):
+        url = 'http://augusto-accorsi-webapp-elb-1925434936.sa-east-1.elb.amazonaws.com:3001/database/save'
+        session = requests.Session()
+        session.trust_env = False
+        res = session.post(url=url, files={'image': ('file.PNG', 'image.png', 'image/png')})
+        print("Call " + str(count+1) + " on /database/save on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
+
         
     async def call_url(self, type):
         #await asyncio.sleep(600)
@@ -43,7 +51,7 @@ class Run:
             minutes = 10  #randint(5, 20)
             sleep = (10*60)#(randint(10, 20) * 60)
             print("calls: "+str(minutes))
-            print("sleep: "+str(sleep/60))
+            #print("sleep: "+str(sleep/60))
             exit_code = 0
             finish_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
             while datetime.datetime.now() < finish_time:
@@ -52,8 +60,8 @@ class Run:
                 z = str(randint(600, 800))
                 if type == "post":
                     status_code = self.call_request_post(count, x, y, z)   
-                if type == "get":
-                    status_code = self.call_request_get(count)
+                if type == "db":
+                    status_code = self.call_database(count)
                 if status_code != 201:
                     exit_code+=1
                 if exit_code == 15:
@@ -72,8 +80,8 @@ if __name__ == '__main__':
         try:
             if sys.argv[1] == "post":
                 asyncio.ensure_future(run.call_url("post"))
-            if sys.argv[1] == "get":
-                asyncio.ensure_future(run.call_url("get"))
+            if sys.argv[1] == "db":
+                asyncio.ensure_future(run.call_url("db"))
             if sys.argv[1] == "sleep":
                 print("sleep for 5")
                 time.sleep(300) #5 minutes

@@ -15,8 +15,6 @@ class Autoscaling:
         self._autoScalingClient = autoScalingClient
         self._terminated = [] 
 
-        print(self._auto_scaling_group)
-
         self._PROACTIVE_DIFF = 45
         self._ACCURACY = 70
         self._SCALE_UP = 70
@@ -116,7 +114,7 @@ class Autoscaling:
     def update_file(self, scale):        
         workbook = load_workbook(filename = 'dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\all.xlsx')
         worksheet = workbook['Sheet1']
-        worksheet.cell(column=5,row=worksheet.max_row, value=scale)
+        worksheet.cell(column=4,row=worksheet.max_row, value=scale)
         workbook.save(filename = 'dataset\\'+self._auto_scaling_group.getAutoScalingGroupName()+'\\all.xlsx')
         workbook.close()
 
@@ -419,8 +417,8 @@ class Autoscaling:
         q1 = queue.Queue()
         q2 = queue.Queue()
 
-        t1 = threading.Thread(target=self.arima_call, args=('cpu', True, 3, q1))
-        t2 = threading.Thread(target=self.arima_call, args=('network', True, 3, q2))
+        t1 = threading.Thread(target=self.arima_call, args=(self._auto_scaling_group.getAutoScalingGroupName()+'\\cpu', True, 3, q1))
+        t2 = threading.Thread(target=self.arima_call, args=(self._auto_scaling_group.getAutoScalingGroupName()+'\\network', True, 3, q2))
     
         # starting thread
         t1.start()

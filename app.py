@@ -271,9 +271,9 @@ class App():
 
                 count+=1
             
-                cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Average")
-                networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Average")
-                networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Average")
+                cpu =  self.get_metric("CPUUtilization", instance.getInstanceId(), start_time, end_time, "Maximum")
+                networkIn =  self.get_metric("NetworkIn", instance.getInstanceId(), start_time, end_time, "Maximum")
+                networkOut =  self.get_metric("NetworkOut", instance.getInstanceId(), start_time, end_time, "Maximum")
                         
                 state = self._ec2.describe_instances(InstanceIds=[instance.getInstanceId()])
                 instance.setLifecycleState(state['Reservations'][0]['Instances'][0]['State']['Name'].title())
@@ -288,21 +288,21 @@ class App():
                 print("Lifecycle State: "+instance.getLifecycleState()+" - "+instance.getHealthStatus()+" - "+instance.getStatus())
         
                 try:
-                    cpuUtilization = round(float(cpu['Datapoints'][0]['Average']),4)
+                    cpuUtilization = round(float(cpu['Datapoints'][0]['Maximum']),4)
                     print("CPU Usage: "+str(cpuUtilization)+"%")
                     instance.setCpuUtilization(cpuUtilization)
                 except:
                     cpuUtilization = None
                 
                 try:
-                    netIn = str(float(networkIn['Datapoints'][0]['Average'])/1000) # valor em kB
+                    netIn = str(float(networkIn['Datapoints'][0]['Maximum'])/1000) # valor em kB
                     #print("Network In: "+netIn+"Kb")
                     instance.setNetworkIn(netIn)
                 except:
                     netIn = None
                 
                 try:
-                    netOut = str(float(networkOut['Datapoints'][0]['Average'])/1000) # valor em kB
+                    netOut = str(float(networkOut['Datapoints'][0]['Maximum'])/1000) # valor em kB
                     #print("Network Out: "+netOut+"Kb")
                     instance.setNetworkOut(netOut)
                 except:
