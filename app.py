@@ -38,6 +38,7 @@ class App():
         self._cooldown = False
         self._cooldown_trigger = 0
         self._timeseries = False
+        self._COOLDOWN = 3
 
         self._microservice = Microservice(self._instances)
 
@@ -340,7 +341,7 @@ class App():
         else:
             self._cooldown_trigger +=1
             print("Cooldown "+str(self._cooldown_trigger))
-            if self._cooldown_trigger == 4:
+            if self._cooldown_trigger == self._COOLDOWN:
                 self._cooldown = False
                 self._cooldown_trigger = 0
         self.describe()
