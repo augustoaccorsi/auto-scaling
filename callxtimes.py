@@ -6,28 +6,80 @@ from random import randint
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import time
+import json, os, xlsxwriter, datetime, timedelta, boto3, sys
+from openpyxl import load_workbook
 
 class Run:
 
     def __init__(self):        
-        self._url = "http://augusto-accorsi-webapp-elb-1925434936.sa-east-1.elb.amazonaws.com:3001/"
-        self._path = "engine/mand?max_iter=&1&width=&2&height=&3"
+        if not os.path.isfile('dataset\\calls\\db.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\calls\\db.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'start', format)
+            worksheet.write('B1', 'end')
+            worksheet.write('C1', 'delta')
+            worksheet.write('D1', 'response code')
+            workbook.close()
 
-    def call_request_get(self, count):
-        session = requests.Session()
-        session.trust_env = False
-        res = session.get(self._url) 
-        print("Call " + str(count+1) + " on "+self._url+" : " + str(res.status_code))
-        return res.status_code
+        
+        if not os.path.isfile('dataset\\calls\\engine.xlsx'):
+            workbook = xlsxwriter.Workbook('dataset\\calls\\engine.xlsx')
+            worksheet = workbook.add_worksheet()
+            format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm'})
+            worksheet.write('A1', 'start', format)
+            worksheet.write('B1', 'end')
+            worksheet.write('C1', 'delta')
+            worksheet.write('D1', 'response code')
+            workbook.close()
+    
+    #def call_request_get(self, count):
+    #    session = requests.Session()
+    #    session.trust_env = False
+    #    res = session.get(self._url) 
+    #    print("Call " + str(count+1) + " on "+self._url+" : " + str(res.status_code))
+    #    return res.status_code
+
+    def save_call_db(self, start, end, delta, response):
+        workbook = load_workbook(filename = 'dataset\\calls\\db.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=start)
+        worksheet.cell(column=2,row=newRowLocation, value=end)
+        worksheet.cell(column=3,row=newRowLocation, value=delta)
+        worksheet.cell(column=4,row=newRowLocation, value=response)
+
+        workbook.save(filename = 'dataset\\calls\\db.xlsx')
+        workbook.close()
+
+    def save_call_engine(self, start, end, delta, response):
+        workbook = load_workbook(filename = 'dataset\\calls\\engine.xlsx')
+        worksheet = workbook['Sheet1']
+        
+        newRowLocation = worksheet.max_row +1
+
+        worksheet.cell(column=1,row=newRowLocation, value=start)
+        worksheet.cell(column=2,row=newRowLocation, value=end)
+        worksheet.cell(column=3,row=newRowLocation, value=delta)
+        worksheet.cell(column=4,row=newRowLocation, value=response)
+
+        workbook.save(filename = 'dataset\\calls\\engine.xlsx')
+        workbook.close()
 
     def call_request_post(self, count, x, y, z):
         session = requests.Session()
         session.trust_env = False
-        path = self._path
+        url = "http://augusto-accorsi-webapp-elb-1925434936.sa-east-1.elb.amazonaws.com:3001/"
+        path = "engine/mand?max_iter=&1&width=&2&height=&3"
         path = path.replace("&1", x)
         path = path.replace("&2", y)
         path = path.replace("&3", z)
-        res = session.post(self._url+path) 
+        start = datetime.datetime.now()
+        res = session.post(url+path) 
+        end = datetime.datetime.now()
+        self.save_call_engine(start, end, res.elapsed.total_seconds(), res.status_code)
         print("Call " + str(count+1) + " on "+path+" on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
         return res.status_code
 
@@ -35,7 +87,10 @@ class Run:
         url = 'http://augusto-accorsi-webapp-elb-1925434936.sa-east-1.elb.amazonaws.com:3001/database/save'
         session = requests.Session()
         session.trust_env = False
+        start = datetime.datetime.now()
         res = session.post(url=url, files={'image': ('file.PNG', 'image.png', 'image/png')})
+        end = datetime.datetime.now()
+        self.save_call_db(start, end, res.elapsed.total_seconds(), res.status_code)
         print("Call " + str(count+1) + " on /database/save on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
 
         
@@ -43,26 +98,26 @@ class Run:
         #await asyncio.sleep(600)
         count = 0
         
-        print("sleeping for 10 minutes")
-        await asyncio.sleep(10*60)
+        print("sleeping for 5 minutes")
+        await asyncio.sleep(5*60)
         print("woke up")
 
         while True:
-            minutes = 10  #randint(5, 20)
+            minutes = 20  #randint(5, 20)
             sleep = (10*60)#(randint(10, 20) * 60)
             print("calls: "+str(minutes))
-            #print("sleep: "+str(sleep/60))
+            print("sleep: "+str(sleep/60))
             exit_code = 0
             finish_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
             while datetime.datetime.now() < finish_time:
-                x = str(randint(600, 800))
-                y = str(randint(600, 800))
-                z = str(randint(600, 800))
-                if type == "post":
+                x = "790"#str(randint(600, 800))
+                y = "790"#str(randint(600, 800))
+                z = "790"#str(randint(600, 800))
+                if type == "engine":
                     status_code = self.call_request_post(count, x, y, z)   
                 if type == "db":
                     status_code = self.call_database(count)
-                if status_code != 201:
+                if status_code != 201 and status_code != 200:
                     exit_code+=1
                 if exit_code == 15:
                     exit_code = 0
@@ -78,8 +133,8 @@ if __name__ == '__main__':
     try:
         print("----------------------------------")
         try:
-            if sys.argv[1] == "post":
-                asyncio.ensure_future(run.call_url("post"))
+            if sys.argv[1] == "engine":
+                asyncio.ensure_future(run.call_url("engine"))
             if sys.argv[1] == "db":
                 asyncio.ensure_future(run.call_url("db"))
             if sys.argv[1] == "sleep":
