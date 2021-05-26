@@ -500,7 +500,7 @@ class Autoscaling:
         return True
 
     def execute(self, microservice):
-        if not self.proactive_scale(microservice):
-            return self.reactive_scale(microservice)
+        if not self.reactive_scale(microservice):
+            return self.proactive_scale(microservice)
         else:
             return True

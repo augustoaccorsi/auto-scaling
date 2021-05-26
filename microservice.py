@@ -36,7 +36,6 @@ class Microservice():
         for instance in self._instances:
             if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService":
                 count += 1
-                print(instance.getNetworkIn())
                 self._cpu_total += float(instance.getCpuUtilization())
                 self._network_in += float(instance.getNetworkIn())
                 self._network_out += float(instance.getNetworkOut())

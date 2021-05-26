@@ -14,7 +14,7 @@ class Run:
     def __init__(self):        
         #self._app = App(auto_scaling_group, region, accessKeyId, secretAccessKey, sessionToken)   
         self._app = App("engine-asg", "sa-east-1")
-        self._localApp = App(sys.argv[1], "sa-east-1")
+        self._localApp = App(sys.argv[1]+"-asg", "sa-east-1")
         self._localApp.describe()
 
     async def auto_scaling_check(self):

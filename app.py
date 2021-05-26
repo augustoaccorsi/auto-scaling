@@ -356,12 +356,12 @@ class App():
 
 
 if __name__ == '__main__':
-    app = App("engine-asg", "sa-east-1")
+    app = App(sys.argv[1], "sa-east-1")
     
     try:
-        if sys.argv[1] == "up":
+        if sys.argv[2] == "up":
             app.scale_up()
-        if sys.argv[1] == "down":
+        if sys.argv[2] == "down":
             app.scale_down()
     except:
         app.create_files()

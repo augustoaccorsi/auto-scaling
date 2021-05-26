@@ -115,7 +115,7 @@ class Run:
                 z = "790"#str(randint(600, 800))
                 if type == "engine":
                     status_code = self.call_request_post(count, x, y, z)   
-                if type == "db":
+                if type == "database":
                     status_code = self.call_database(count)
                 if status_code != 201 and status_code != 200:
                     exit_code+=1
@@ -135,8 +135,8 @@ if __name__ == '__main__':
         try:
             if sys.argv[1] == "engine":
                 asyncio.ensure_future(run.call_url("engine"))
-            if sys.argv[1] == "db":
-                asyncio.ensure_future(run.call_url("db"))
+            if sys.argv[1] == "database":
+                asyncio.ensure_future(run.call_url("database"))
             if sys.argv[1] == "sleep":
                 print("sleep for 5")
                 time.sleep(300) #5 minutes
