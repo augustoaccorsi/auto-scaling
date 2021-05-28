@@ -39,7 +39,8 @@ class Autoscaling:
         self.set_thresholds()
         
     def calculate_threasholds(self, values):
-        upper =  np.percentile(np.sort(values), 90)
+        upper =  round(np.percentile(np.sort(values), 90))
+        #lower = math.floor(statistics.median(np.sort(values)))
         lower = statistics.median(np.sort(values))
         mean = np.mean(np.sort(values))
 
@@ -81,7 +82,9 @@ class Autoscaling:
             self._CPU_UPPER_TRESHOLD = 70
             self._NETWORK_UPPER_TRESHOLD = 999999
             self._NETWORK_LOWER_TRESHOLD = -1
-        
+
+        if self._CPU_UPPER_TRESHOLD == 0:
+            self._CPU_UPPER_TRESHOLD = 1
         
         print("CPU: "+str(self._CPU_UPPER_TRESHOLD)+" / "+str(self._CPU_LOWER_TRESHOLD))
         print("NET:  "+str(self._NETWORK_UPPER_TRESHOLD)+" / "+str(self._NETWORK_LOWER_TRESHOLD))
@@ -127,40 +130,45 @@ class Autoscaling:
         worksheet.cell(column=7,row=worksheet.max_row, value=str(self._NETWORK_UPPER_TRESHOLD))       
         worksheet.cell(column=8,row=worksheet.max_row, value=str(self._NETWORK_LOWER_TRESHOLD))     
 
-        worksheet.cell(column=9,row=worksheet.max_row, value=cpu._arima_order)
+        try:
+            worksheet.cell(column=9,row=worksheet.max_row, value=cpu._arima_order)
+        except:
+            pass
         try:
             worksheet.cell(column=10,row=worksheet.max_row, value=str(cpu._accuracy))
             worksheet.cell(column=11,row=worksheet.max_row, value=str(cpu._forecast[0]))
         except:
-            worksheet.cell(column=10,row=worksheet.max_row, value="")
-            worksheet.cell(column=11,row=worksheet.max_row, value="")
-
-        worksheet.cell(column=12,row=worksheet.max_row, value=network._arima_order)
+            pass        
+        try:
+            worksheet.cell(column=12,row=worksheet.max_row, value=network._arima_order)
+        except:
+            pass
         try:
             worksheet.cell(column=13,row=worksheet.max_row, value=str(network._accuracy))
             worksheet.cell(column=14,row=worksheet.max_row, value=str(network._forecast[0]))
         except:
-            worksheet.cell(column=13,row=worksheet.max_row, value="")
-            worksheet.cell(column=14,row=worksheet.max_row, value="")
+            pass
 
-       
-        worksheet.cell(column=15,row=worksheet.max_row, value=str(cpu._mape))
-        worksheet.cell(column=16,row=worksheet.max_row, value=str(cpu._me))
-        worksheet.cell(column=17,row=worksheet.max_row, value=str(cpu._mae))
-        worksheet.cell(column=18,row=worksheet.max_row, value=str(cpu._mpe))
-        worksheet.cell(column=19,row=worksheet.max_row, value=str(cpu._rmse))
-        worksheet.cell(column=20,row=worksheet.max_row, value=str(cpu._corr))
-        worksheet.cell(column=21,row=worksheet.max_row, value=str(cpu._minmax))
-        worksheet.cell(column=22,row=worksheet.max_row, value=str(cpu._acf1))
+        try:       
+            worksheet.cell(column=15,row=worksheet.max_row, value=str(cpu._mape))
+            worksheet.cell(column=16,row=worksheet.max_row, value=str(cpu._me))
+            worksheet.cell(column=17,row=worksheet.max_row, value=str(cpu._mae))
+            worksheet.cell(column=18,row=worksheet.max_row, value=str(cpu._mpe))
+            worksheet.cell(column=19,row=worksheet.max_row, value=str(cpu._rmse))
+            worksheet.cell(column=20,row=worksheet.max_row, value=str(cpu._corr))
+            worksheet.cell(column=21,row=worksheet.max_row, value=str(cpu._minmax))
+            worksheet.cell(column=22,row=worksheet.max_row, value=str(cpu._acf1))
 
-        worksheet.cell(column=23,row=worksheet.max_row, value=str(network._mape))
-        worksheet.cell(column=24,row=worksheet.max_row, value=str(network._me))
-        worksheet.cell(column=25,row=worksheet.max_row, value=str(network._mae))
-        worksheet.cell(column=26,row=worksheet.max_row, value=str(network._mpe))
-        worksheet.cell(column=27,row=worksheet.max_row, value=str(network._rmse))
-        worksheet.cell(column=28,row=worksheet.max_row, value=str(network._corr))
-        worksheet.cell(column=29,row=worksheet.max_row, value=str(network._minmax))
-        worksheet.cell(column=30,row=worksheet.max_row, value=str(network._acf1))
+            worksheet.cell(column=23,row=worksheet.max_row, value=str(network._mape))
+            worksheet.cell(column=24,row=worksheet.max_row, value=str(network._me))
+            worksheet.cell(column=25,row=worksheet.max_row, value=str(network._mae))
+            worksheet.cell(column=26,row=worksheet.max_row, value=str(network._mpe))
+            worksheet.cell(column=27,row=worksheet.max_row, value=str(network._rmse))
+            worksheet.cell(column=28,row=worksheet.max_row, value=str(network._corr))
+            worksheet.cell(column=29,row=worksheet.max_row, value=str(network._minmax))
+            worksheet.cell(column=30,row=worksheet.max_row, value=str(network._acf1))
+        except:
+            pass
 
         worksheet.cell(column=31,row=worksheet.max_row, value=str(self._auto_scaling_group.getDesiredCapacity()))
 
@@ -201,6 +209,7 @@ class Autoscaling:
     def scale_v2(self, microservice, proactive):
         if proactive == True:
             if (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network > self._NETWORK_UPPER_TRESHOLD and microservice._network_accuracy >= self._ACCURACY):
+                '''
                 total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100) 
                 if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("pro up")
@@ -209,12 +218,14 @@ class Autoscaling:
                     print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
                     return self.scale_up(2, microservice)
                 else:
-                    self.update_file("pro up")
-                    print("PROATIVO")
-                    microservice._scale_up_trigger += 1
-                    print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
-                    return self.scale_up(1, microservice)
+                '''
+                self.update_file("pro up")
+                print("PROATIVO")
+                microservice._scale_up_trigger += 1
+                print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
+                return self.scale_up(1, microservice)
             elif microservice._count > 1 and (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY) or (microservice._network > self._NETWORK_UPPER_TRESHOLD and microservice._network_accuracy >= self._ACCURACY):      
+                '''
                 try:
                     total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
@@ -228,14 +239,16 @@ class Autoscaling:
                     self.update_file("pro down")
                     return self.scale_down(2, microservice)
                 else:
-                    self.update_file(2)
-                    print("PROATIVO")
-                    microservice._scale_down_trigger += 1
-                    print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
-                    self.update_file("pro down")
-                    return self.scale_down(1, microservice)
+                '''
+                self.update_file(2)
+                print("PROATIVO")
+                microservice._scale_down_trigger += 1
+                print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
+                self.update_file("pro down")
+                return self.scale_down(1, microservice)
         else:
             if microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD or microservice._network > self._NETWORK_UPPER_TRESHOLD:
+                '''
                 total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100)
                 if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("rea up")
@@ -244,12 +257,14 @@ class Autoscaling:
                     print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
                     return self.scale_up(2, microservice)
                 else:
-                    self.update_file("rea up")
-                    print("REATIVO")
-                    microservice._scale_up_trigger += 1
-                    print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
-                    return self.scale_up(1, microservice)
+                '''
+                self.update_file("rea up")
+                print("REATIVO")
+                microservice._scale_up_trigger += 1
+                print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
+                return self.scale_up(1, microservice)
             elif microservice._count > 1 and (microservice._cpu_utilization < self._CPU_LOWER_TRESHOLD or microservice._network < self._NETWORK_LOWER_TRESHOLD):      
+                '''
                 try:
                     total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
@@ -262,11 +277,12 @@ class Autoscaling:
                     print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
                     return self.scale_down(2, microservice)
                 else:
-                    self.update_file("rea down")
-                    print("REATIVO")
-                    microservice._scale_down_trigger += 1
-                    print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
-                    return self.scale_down(1, microservice)
+                ''' 
+                self.update_file("rea down")
+                print("REATIVO")
+                microservice._scale_down_trigger += 1
+                print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
+                return self.scale_down(1, microservice)
 
         return False 
 
@@ -417,8 +433,8 @@ class Autoscaling:
         q1 = queue.Queue()
         q2 = queue.Queue()
 
-        t1 = threading.Thread(target=self.arima_call, args=(self._auto_scaling_group.getAutoScalingGroupName()+'\\cpu', True, 3, q1))
-        t2 = threading.Thread(target=self.arima_call, args=(self._auto_scaling_group.getAutoScalingGroupName()+'\\network', True, 3, q2))
+        t1 = threading.Thread(target=self.arima_call, args=(self._auto_scaling_group.getAutoScalingGroupName()+'\\cpu', False, 3, q1))
+        t2 = threading.Thread(target=self.arima_call, args=(self._auto_scaling_group.getAutoScalingGroupName()+'\\network', False, 3, q2))
     
         # starting thread
         t1.start()
@@ -502,5 +518,6 @@ class Autoscaling:
     def execute(self, microservice):
         if not self.reactive_scale(microservice):
             return self.proactive_scale(microservice)
-        else:
+        else:            
+            self.save_file("", "")
             return True

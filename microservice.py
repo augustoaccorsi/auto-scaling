@@ -32,19 +32,19 @@ class Microservice():
     def set_all(self, instances):
         self._instances = instances
         self.clear()
-        count = 0
+        network = 0
         for instance in self._instances:
             if instance.getLifecycleState() == "Running" and instance.getHealthStatus() == "InService":
-                count += 1
+                self._count += 1
                 self._cpu_total += float(instance.getCpuUtilization())
                 self._network_in += float(instance.getNetworkIn())
                 self._network_out += float(instance.getNetworkOut())
                 self._packet_in += float(instance.getNetworkPacketsIn())
                 self._packet_out += float(instance.getNetworkPacketsOut())
-                self._network += float(instance.getNetwork())
+                network += float(instance.getNetwork())
         
-        self._count = count
         try:
-            self._cpu_utilization =  (self._cpu_total * 100) / (count * 100)
+            self._cpu_utilization =  (self._cpu_total * 100) / (self._count * 100)
+            self._network = network / self._count 
         except:
             pass

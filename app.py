@@ -322,12 +322,12 @@ class App():
             self._microservice.set_all(self._instances)
             
             print("----")
-            print("Total CPU: "+ str(self._microservice._cpu_total))
+            #print("Total CPU: "+ str(self._microservice._cpu_total))
             print("Utilization: "+str(self._microservice._cpu_utilization))
             print("Network: "+ str(self._microservice._network))
             print("----")
             print()
-
+                
             if self._microservice._cpu_total > 0 and self._microservice._cpu_utilization > 0 and self._microservice._network > 0:
                 self.save_into_file(end_time, self._microservice)
             

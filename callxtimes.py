@@ -72,14 +72,16 @@ class Run:
         session = requests.Session()
         session.trust_env = False
         url = "http://augusto-accorsi-webapp-elb-1925434936.sa-east-1.elb.amazonaws.com:3001/"
+        #url = "http://augusto-accorsi-engine-elb-1884692720.sa-east-1.elb.amazonaws.com:5000/"
         path = "engine/mand?max_iter=&1&width=&2&height=&3"
         path = path.replace("&1", x)
         path = path.replace("&2", y)
         path = path.replace("&3", z)
         start = datetime.datetime.now()
-        res = session.post(url+path) 
+        res = session.post(url+path)    
         end = datetime.datetime.now()
-        self.save_call_engine(start, end, res.elapsed.total_seconds(), res.status_code)
+        if res.status_code == 201:
+            self.save_call_engine(start, end, res.elapsed.total_seconds(), res.status_code)
         print("Call " + str(count+1) + " on "+path+" on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
         return res.status_code
 
@@ -90,7 +92,8 @@ class Run:
         start = datetime.datetime.now()
         res = session.post(url=url, files={'image': ('file.PNG', 'image.png', 'image/png')})
         end = datetime.datetime.now()
-        self.save_call_db(start, end, res.elapsed.total_seconds(), res.status_code)
+        if res.status_code == 201:
+            self.save_call_db(start, end, res.elapsed.total_seconds(), res.status_code)
         print("Call " + str(count+1) + " on /database/save on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
 
         
@@ -98,21 +101,21 @@ class Run:
         #await asyncio.sleep(600)
         count = 0
         
-        print("sleeping for 5 minutes")
-        await asyncio.sleep(5*60)
+        print("sleeping for 20 minutes")
+        #await asyncio.sleep(20*60)
         print("woke up")
 
         while True:
             minutes = 20  #randint(5, 20)
-            sleep = (10*60)#(randint(10, 20) * 60)
+            sleep = (20*60)#(randint(10, 20) * 60)
             print("calls: "+str(minutes))
             print("sleep: "+str(sleep/60))
             exit_code = 0
             finish_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
             while datetime.datetime.now() < finish_time:
-                x = "790"#str(randint(600, 800))
-                y = "790"#str(randint(600, 800))
-                z = "790"#str(randint(600, 800))
+                x = "950"#str(randint(600, 800))
+                y = "950"#str(randint(600, 800))
+                z = "950"#str(randint(600, 800))
                 if type == "engine":
                     status_code = self.call_request_post(count, x, y, z)   
                 if type == "database":
