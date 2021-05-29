@@ -327,16 +327,19 @@ class App():
             print("Network: "+ str(self._microservice._network))
             print("----")
             print()
-                
+
             if self._microservice._cpu_total > 0 and self._microservice._cpu_utilization > 0 and self._microservice._network > 0:
                 self.save_into_file(end_time, self._microservice)
             
                 autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
                 
+                #autoscaling.aws()
+                
+                
                 if not autoscaling.execute(self._microservice):
                     self._microservice._scale_up_trigger = 0
                     self._microservice._scale_down_trigger = 0
-            
+                           
                 self._cooldown = autoscaling._cooldown
         else:
             self._cooldown_trigger +=1

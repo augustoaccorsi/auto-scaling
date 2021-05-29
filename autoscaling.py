@@ -39,10 +39,16 @@ class Autoscaling:
         self.set_thresholds()
         
     def calculate_threasholds(self, values):
-        upper =  round(np.percentile(np.sort(values), 90))
+        upper =  np.percentile(np.sort(values), 90)
+
+        if upper - int(upper) >= 0.5:
+            upper = round(upper)
+
         #lower = math.floor(statistics.median(np.sort(values)))
         lower = statistics.median(np.sort(values))
         mean = np.mean(np.sort(values))
+
+
 
         return upper, lower
 
@@ -92,11 +98,14 @@ class Autoscaling:
     
     def scale_up(self, instancesUp, microservice):
         if microservice._scale_up_trigger == self._AUTOSCALING_TRIGGER:
-            self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
-            print("Autoscaling Group scalled up, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
-            microservice._scale_up_trigger = 0
-            self._cooldown = True
-            #return True
+            try:
+                self._autoScalingClient.set_desired_capacity(AutoScalingGroupName=self._auto_scaling_group.getAutoScalingGroupName(), DesiredCapacity=(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
+                print("Autoscaling Group scalled up, from "+str(self._auto_scaling_group.getDesiredCapacity())+" to "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp)+" new desired capacity: "+str(self._auto_scaling_group.getDesiredCapacity() + instancesUp))
+                microservice._scale_up_trigger = 0
+                self._cooldown = True
+                #return True
+            except:
+                print("too many instances already")
         return True
 
     def scale_down(self, instancesDown, microservice):
@@ -514,6 +523,9 @@ class Autoscaling:
             self.update_file(0)
             return False
         return True
+
+    def aws(self):
+        self.save_file("", "")
 
     def execute(self, microservice):
         if not self.reactive_scale(microservice):

@@ -95,6 +95,8 @@ class Run:
         if res.status_code == 201:
             self.save_call_db(start, end, res.elapsed.total_seconds(), res.status_code)
         print("Call " + str(count+1) + " on /database/save on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
+        return res.status_code
+
 
         
     async def call_url(self, type):
@@ -102,7 +104,7 @@ class Run:
         count = 0
         
         print("sleeping for 20 minutes")
-        #await asyncio.sleep(20*60)
+        await asyncio.sleep(20*60)
         print("woke up")
 
         while True:
