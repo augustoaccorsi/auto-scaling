@@ -115,9 +115,9 @@ class Run:
             exit_code = 0
             finish_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
             while datetime.datetime.now() < finish_time:
-                x = "950"#str(randint(600, 800))
-                y = "950"#str(randint(600, 800))
-                z = "950"#str(randint(600, 800))
+                x = "999"#str(randint(600, 800))
+                y = "999"#str(randint(600, 800))
+                z = "999"#str(randint(600, 800))
                 if type == "engine":
                     status_code = self.call_request_post(count, x, y, z)   
                 if type == "database":
