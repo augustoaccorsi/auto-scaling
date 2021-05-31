@@ -48,6 +48,9 @@ class Autoscaling:
         lower = statistics.median(np.sort(values))
         mean = np.mean(np.sort(values))
 
+        #upper = float("{:.2f}".format(upper))
+        #lower = float("{:.2f}".format(lower))
+
 
 
         return upper, lower
@@ -106,6 +109,8 @@ class Autoscaling:
                 #return True
             except:
                 print("too many instances already")
+                self._cooldown = True
+                microservice._scale_up_trigger = 0
         return True
 
     def scale_down(self, instancesDown, microservice):

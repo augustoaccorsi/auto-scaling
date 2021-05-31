@@ -82,7 +82,7 @@ class Run:
         end = datetime.datetime.now()
         if res.status_code == 201:
             self.save_call_engine(start, end, res.elapsed.total_seconds(), res.status_code)
-        print("Call " + str(count+1) + " on "+path+" on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
+        print("Call " + str(count+1) + " on "+path+" on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code)+" : "+str(res.elapsed.total_seconds()))
         return res.status_code
 
     def call_database(self, count):
@@ -94,7 +94,7 @@ class Run:
         end = datetime.datetime.now()
         if res.status_code == 201:
             self.save_call_db(start, end, res.elapsed.total_seconds(), res.status_code)
-        print("Call " + str(count+1) + " on /database/save on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code))
+        print("Call " + str(count+1) + " on /database/save on "+str(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S'))+" : "+ str(res.status_code)+" : "+str(res.elapsed.total_seconds()))
         return res.status_code
 
 

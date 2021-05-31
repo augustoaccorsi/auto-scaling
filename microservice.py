@@ -46,5 +46,7 @@ class Microservice():
         try:
             self._cpu_utilization =  (self._cpu_total * 100) / (self._count * 100)
             self._network = network / self._count 
+            #self._cpu_utilization = float("{:.2f}".format(self._cpu_utilization))
+            #self._network = float("{:.2f}".format(self._network))
         except:
             pass
