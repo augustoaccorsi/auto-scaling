@@ -333,16 +333,16 @@ class App():
             
                 autoscaling = Autoscaling(self._instances, self._auto_scaling_group, self._asg)
                 
-                autoscaling.aws()
+                #autoscaling.aws()
                 
                 
-                '''
+                
                 if not autoscaling.execute(self._microservice):
                     self._microservice._scale_up_trigger = 0
                     self._microservice._scale_down_trigger = 0
                            
                 self._cooldown = autoscaling._cooldown
-                '''
+                
         else:
             self._cooldown_trigger +=1
             print("Cooldown "+str(self._cooldown_trigger))

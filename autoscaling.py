@@ -303,6 +303,7 @@ class Autoscaling:
     def scale_cpu(self, microservice, proactive):
         if proactive == True:
             if (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY):
+                '''
                 total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100) 
                 if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("pro up")
@@ -311,12 +312,14 @@ class Autoscaling:
                     print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
                     return self.scale_up(2, microservice)
                 else:
-                    self.update_file("pro up")
-                    print("PROATIVO")
-                    microservice._scale_up_trigger += 1
-                    print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
-                    return self.scale_up(1, microservice)
+                '''   
+                self.update_file("pro up")
+                print("PROATIVO")
+                microservice._scale_up_trigger += 1
+                print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
+                return self.scale_up(1, microservice)
             elif microservice._count > 1 and (microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD and microservice._cpu_accuracy >= self._ACCURACY):      
+                '''
                 try:
                     total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
@@ -330,14 +333,16 @@ class Autoscaling:
                     self.update_file("pro down")
                     return self.scale_down(2, microservice)
                 else:
-                    self.update_file(2)
-                    print("PROATIVO")
-                    microservice._scale_down_trigger += 1
-                    print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
-                    self.update_file("pro down")
-                    return self.scale_down(1, microservice)
+                '''
+                self.update_file(2)
+                print("PROATIVO")
+                microservice._scale_down_trigger += 1
+                print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
+                self.update_file("pro down")
+                return self.scale_down(1, microservice)
         else:
             if microservice._cpu_utilization > self._CPU_UPPER_TRESHOLD:
+                '''
                 total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100)
                 if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("rea up")
@@ -346,12 +351,14 @@ class Autoscaling:
                     print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
                     return self.scale_up(2, microservice)
                 else:
-                    self.update_file("rea up")
-                    print("REATIVO")
-                    microservice._scale_up_trigger += 1
-                    print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
-                    return self.scale_up(1, microservice)
+                '''
+                self.update_file("rea up")
+                print("REATIVO")
+                microservice._scale_up_trigger += 1
+                print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
+                return self.scale_up(1, microservice)
             elif microservice._count > 1 and (microservice._cpu_utilization < self._CPU_LOWER_TRESHOLD):      
+                '''
                 try:
                     total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
@@ -364,17 +371,19 @@ class Autoscaling:
                     print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
                     return self.scale_down(2, microservice)
                 else:
-                    self.update_file("rea down")
-                    print("REATIVO")
-                    microservice._scale_down_trigger += 1
-                    print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
-                    return self.scale_down(1, microservice)
+                '''
+                self.update_file("rea down")
+                print("REATIVO")
+                microservice._scale_down_trigger += 1
+                print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
+                return self.scale_down(1, microservice)
 
         return False 
 
     def scale_network(self, microservice, proactive):
         if proactive == True:
             if (microservice._network > self._NETWORK_UPPER_TRESHOLD and microservice._network_accuracy >= self._ACCURACY):
+                '''
                 total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100) 
                 if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("pro up")
@@ -383,12 +392,14 @@ class Autoscaling:
                     print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
                     return self.scale_up(2, microservice)
                 else:
-                    self.update_file("pro up")
-                    print("PROATIVO")
-                    microservice._scale_up_trigger += 1
-                    print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
-                    return self.scale_up(1, microservice)
+                '''
+                self.update_file("pro up")
+                print("PROATIVO")
+                microservice._scale_up_trigger += 1
+                print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
+                return self.scale_up(1, microservice)
             elif microservice._count > 1 and (microservice._network > self._NETWORK_UPPER_TRESHOLD and microservice._network_accuracy >= self._ACCURACY):      
+                '''
                 try:
                     total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
@@ -402,14 +413,16 @@ class Autoscaling:
                     self.update_file("pro down")
                     return self.scale_down(2, microservice)
                 else:
-                    self.update_file(2)
-                    print("PROATIVO")
-                    microservice._scale_down_trigger += 1
-                    print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
-                    self.update_file("pro down")
-                    return self.scale_down(1, microservice)
+                '''   
+                self.update_file(2)
+                print("PROATIVO")
+                microservice._scale_down_trigger += 1
+                print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
+                self.update_file("pro down")
+                return self.scale_down(1, microservice)
         else:
             if microservice._network > self._NETWORK_UPPER_TRESHOLD:
+                '''
                 total =  (microservice._cpu_total * 100) / ((microservice._count+1) * 100)
                 if total >= self._CPU_UPPER_TRESHOLD:
                     self.update_file("rea up")
@@ -418,12 +431,14 @@ class Autoscaling:
                     print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
                     return self.scale_up(2, microservice)
                 else:
-                    self.update_file("rea up")
-                    print("REATIVO")
-                    microservice._scale_up_trigger += 1
-                    print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
-                    return self.scale_up(1, microservice)
+                '''
+                self.update_file("rea up")
+                print("REATIVO")
+                microservice._scale_up_trigger += 1
+                print("Scale Up Trigger: "+str(microservice._scale_up_trigger))
+                return self.scale_up(1, microservice)
             elif microservice._count > 1 and (microservice._network < self._NETWORK_LOWER_TRESHOLD):      
+                '''
                 try:
                     total =  (microservice._cpu_total * 100) / ((microservice._count-1) * 100)
                 except:
@@ -436,11 +451,12 @@ class Autoscaling:
                     print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
                     return self.scale_down(2, microservice)
                 else:
-                    self.update_file("rea down")
-                    print("REATIVO")
-                    microservice._scale_down_trigger += 1
-                    print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
-                    return self.scale_down(1, microservice)
+                '''
+                self.update_file("rea down")
+                print("REATIVO")
+                microservice._scale_down_trigger += 1
+                print("Scale Down Trigger: "+str(microservice._scale_down_trigger))
+                return self.scale_down(1, microservice)
 
         return False 
     def arima(self):
