@@ -336,11 +336,11 @@ class App():
                 #autoscaling.aws()
                 
                 
-                
+                #'''
                 if not autoscaling.execute(self._microservice):
                     self._microservice._scale_up_trigger = 0
                     self._microservice._scale_down_trigger = 0
-                           
+                #'''           
                 self._cooldown = autoscaling._cooldown
                 
         else:

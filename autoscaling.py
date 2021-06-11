@@ -501,7 +501,9 @@ class Autoscaling:
         microservice._network_accuracy = network._accuracy
         
         #return self.scale(microservice)
-        return self.scale_v2(microservice, True)
+        #return self.scale_v2(microservice, True)
+        return self.scale_cpu (microservice, True)
+        #return self.scale_network(microservice, True)
 
         #se precisão de cpu e rede forem >= a 70% eo valor atual não for praticamente ZERO				
 	        #se o próximo valor é maior que antigo			
@@ -540,7 +542,7 @@ class Autoscaling:
 
     def reactive_scale(self, microservice):
         #if not self.scale(microservice):
-        if not self.scale_v2(microservice, False):
+        if not self.scale_cpu(microservice, False):
             self.update_file(0)
             return False
         return True
